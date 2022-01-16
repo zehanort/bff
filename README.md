@@ -1,8 +1,9 @@
-# bff (Befunge Forever) - A Befunge 93 (and soon 98) interpreter in Rust
+# bff (Befunge Forever)
+## A Befunge 93 (and soon 98) interpreter in Rust
 
 [![codecov](https://codecov.io/gh/zehanort/bff/branch/main/graph/badge.svg?token=IS0D12XPPA)](https://codecov.io/gh/zehanort/bff)
 
----
+## What?
 
 `bff` (Befunge Forever) is a toy project of mine,
 the secondary purpose of which is to interpret Befunge 93 (and soon 98) progams.
