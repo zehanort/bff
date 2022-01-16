@@ -1,26 +1,25 @@
 use std::default::Default;
 
-use crate::direction::Direction;
+use crate::delta::Delta;
 
 #[derive(Default)]
 pub struct Cursor {
     x: i32,
     y: i32,
-    direction: Direction,
+    delta: Delta,
 }
 
 impl Cursor {
-    pub fn set_direction(&mut self, new_direction: Direction) {
-        self.direction = new_direction;
+    pub fn position(&self) -> (i32, i32) {
+        (self.x, self.y)
     }
 
-    pub fn reflect(&mut self) {
-        match self.direction() {
-            Direction::North => self.set_direction(Direction::South),
-            Direction::East => self.set_direction(Direction::West),
-            Direction::South => self.set_direction(Direction::North),
-            Direction::West => self.set_direction(Direction::East),
-        }
+    pub fn delta(&self) -> &Delta {
+        &self.delta
+    }
+
+    pub fn set_delta(&mut self, new_delta: Delta) {
+        self.delta = new_delta;
     }
 
     pub fn set_position(&mut self, x: i32, y: i32) {
@@ -28,11 +27,33 @@ impl Cursor {
         self.y = y;
     }
 
-    pub fn position(&self) -> (i32, i32) {
-        (self.x, self.y)
+    /// Reflects delta to point to "the opposite way".
+    pub fn reflect(&mut self) {
+        self.delta.reflect();
     }
 
-    pub fn direction(&self) -> &Direction {
-        &self.direction
+    /**
+    Moves the cursor one step on the `delta` direction
+    and takes care of any possible wrap-around, effectively updating
+    the cursor's `position`.
+    */
+    pub fn r#move(&mut self, bounds: (i32, i32)) {
+        let (x, y) = self.position();
+        let delta = self.delta();
+        let mut new_x = x + delta.x;
+        let mut new_y = y + delta.y;
+        if new_x < 0 {
+            new_x = bounds.0 - 1;
+        }
+        if new_y < 0 {
+            new_y = bounds.1 - 1;
+        }
+        if new_x >= bounds.0 {
+            new_x = 0;
+        }
+        if new_y >= bounds.1 {
+            new_y = 0;
+        }
+        self.set_position(new_x, new_y);
     }
 }

@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::cursor::Cursor;
-use crate::direction::Direction;
+use crate::delta::Delta;
 
 #[derive(Default)]
 pub struct Program {
@@ -103,40 +103,10 @@ impl Program {
     }
 
     /**
-    Moves the cursor one step on the `cursor.direction`
-    and takes care of any possible wrap-around, effectively updating
-    the `cursor.position`.
-
-    Note that this is a method of `Program` instead of `Cursor` because
-    it is more reasonable for the bounds checking logic
-    to be implemented in the `Program` component.
+    A wrapper around the `move` method of the cursor object.
     */
     fn move_cursor(&mut self) {
-        let (x, y) = self.cursor.position();
-        match self.cursor.direction() {
-            Direction::East => self
-                .cursor
-                .set_position(if x + 1 == self.bounds.0 { 0 } else { x + 1 }, y),
-            Direction::South => self
-                .cursor
-                .set_position(x, if y + 1 == self.bounds.1 { 0 } else { y + 1 }),
-            Direction::West => self.cursor.set_position(
-                if x - 1 == -1 {
-                    self.bounds.0 - 1
-                } else {
-                    x - 1
-                },
-                y,
-            ),
-            Direction::North => self.cursor.set_position(
-                x,
-                if y - 1 == -1 {
-                    self.bounds.1 - 1
-                } else {
-                    y - 1
-                },
-            ),
-        }
+        self.cursor.r#move(self.bounds);
     }
 
     /**
@@ -208,31 +178,28 @@ impl Program {
                     self.push(if b > a { 1 } else { 0 })
                 }
                 // Start moving right
-                '>' => self.cursor.set_direction(Direction::East),
+                '>' => self.cursor.set_delta(Delta::east()),
                 // Start moving left
-                '<' => self.cursor.set_direction(Direction::West),
+                '<' => self.cursor.set_delta(Delta::west()),
                 // Start moving up
-                '^' => self.cursor.set_direction(Direction::North),
+                '^' => self.cursor.set_delta(Delta::north()),
                 // Start moving down
-                'v' => self.cursor.set_direction(Direction::South),
+                'v' => self.cursor.set_delta(Delta::south()),
                 // Start moving in a random cardinal direction
-                '?' => self.cursor.set_direction(rand::random()),
+                '?' => self.cursor.set_delta(rand::random()),
                 // Pop a value; move right if value=0, left otherwise
                 '_' => {
                     let a = self.pop();
-                    self.cursor.set_direction(if a == 0 {
-                        Direction::East
-                    } else {
-                        Direction::West
-                    })
+                    self.cursor
+                        .set_delta(if a == 0 { Delta::east() } else { Delta::west() })
                 }
                 // Pop a value; move down if value=0, up otherwise
                 '|' => {
                     let a = self.pop();
-                    self.cursor.set_direction(if a == 0 {
-                        Direction::South
+                    self.cursor.set_delta(if a == 0 {
+                        Delta::south()
                     } else {
-                        Direction::North
+                        Delta::north()
                     })
                 }
                 // Start string mode: push each character's ASCII value all the way up to the next "

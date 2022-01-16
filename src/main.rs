@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
 mod cursor;
-mod direction;
+mod delta;
 mod program;
 
 pub type Error = Box<dyn std::error::Error>;
