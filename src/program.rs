@@ -87,7 +87,16 @@ impl Program {
 
     /// Returns the `char` on the `position` coordinates of the program grid.
     fn get_cell(&self, position: (i32, i32)) -> char {
-        self.grid[position.1 as usize][position.0 as usize]
+        if position.1 >= self.grid.len() as i32 || position.0 >= self.grid[0].len() as i32 {
+            ' '
+        } else if position.0 >= BEFUNGE_93_BOUNDS.0 || position.1 >= BEFUNGE_93_BOUNDS.1 {
+            panic!(
+                "\"get\" attempt outside the Befunge 93 bounding box -> (80x25), attempted ({}x{})",
+                position.0, position.1
+            );
+        } else {
+            self.grid[position.1 as usize][position.0 as usize]
+        }
     }
 
     /// Puts `c` on the `position` coordinates of the program grid.
@@ -115,13 +124,13 @@ impl Program {
     fn move_cursor(&mut self) {
         let (x, y) = self.cursor.position();
         match self.cursor.direction() {
-            Direction::Right => self
+            Direction::East => self
                 .cursor
                 .set_position(if x + 1 == self.bounds.0 { 0 } else { x + 1 }, y),
-            Direction::Down => self
+            Direction::South => self
                 .cursor
                 .set_position(x, if y + 1 == self.bounds.1 { 0 } else { y + 1 }),
-            Direction::Left => self.cursor.set_position(
+            Direction::West => self.cursor.set_position(
                 if x - 1 == -1 {
                     self.bounds.0 - 1
                 } else {
@@ -129,7 +138,7 @@ impl Program {
                 },
                 y,
             ),
-            Direction::Up => self.cursor.set_position(
+            Direction::North => self.cursor.set_position(
                 x,
                 if y - 1 == -1 {
                     self.bounds.1 - 1
@@ -209,31 +218,31 @@ impl Program {
                     self.push(if b > a { 1 } else { 0 })
                 }
                 // Start moving right
-                '>' => self.cursor.set_direction(Direction::Right),
+                '>' => self.cursor.set_direction(Direction::East),
                 // Start moving left
-                '<' => self.cursor.set_direction(Direction::Left),
+                '<' => self.cursor.set_direction(Direction::West),
                 // Start moving up
-                '^' => self.cursor.set_direction(Direction::Up),
+                '^' => self.cursor.set_direction(Direction::North),
                 // Start moving down
-                'v' => self.cursor.set_direction(Direction::Down),
+                'v' => self.cursor.set_direction(Direction::South),
                 // Start moving in a random cardinal direction
                 '?' => self.cursor.set_direction(rand::random()),
                 // Pop a value; move right if value=0, left otherwise
                 '_' => {
                     let a = self.pop();
                     self.cursor.set_direction(if a == 0 {
-                        Direction::Right
+                        Direction::East
                     } else {
-                        Direction::Left
+                        Direction::West
                     })
                 }
                 // Pop a value; move down if value=0, up otherwise
                 '|' => {
                     let a = self.pop();
                     self.cursor.set_direction(if a == 0 {
-                        Direction::Down
+                        Direction::South
                     } else {
-                        Direction::Up
+                        Direction::North
                     })
                 }
                 // Start string mode: push each character's ASCII value all the way up to the next "
@@ -310,7 +319,9 @@ impl Program {
                 // Every other character
                 // Note that string mode is OFF here
                 // (we checked the "ON" case before the match statement)
-                c => panic!("Invalid Befunge 93 instruction '{}'", c),
+                // as per the standard, we will reflect
+                // (imitating the "r" instruction which will be added later...)
+                _ => self.cursor.reflect(),
             }
         }
 

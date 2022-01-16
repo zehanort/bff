@@ -6,25 +6,25 @@ use std::default::Default;
 
 #[derive(Debug)]
 pub enum Direction {
-    Right,
-    Down,
-    Left,
-    Up,
+    East,
+    South,
+    West,
+    North,
 }
 
 impl Default for Direction {
     fn default() -> Self {
-        Direction::Right
+        Direction::East
     }
 }
 
 impl Distribution<Direction> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Direction {
         match rng.gen_range(0..=3) {
-            0 => Direction::Right,
-            1 => Direction::Down,
-            2 => Direction::Left,
-            _ => Direction::Up,
+            0 => Direction::East,
+            1 => Direction::South,
+            2 => Direction::West,
+            _ => Direction::North,
         }
     }
 }
