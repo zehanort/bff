@@ -4,7 +4,6 @@ use rand::{
 };
 use std::default::Default;
 
-#[derive(Debug)]
 pub enum Direction {
     East,
     South,

@@ -2,7 +2,7 @@ use std::default::Default;
 
 use crate::direction::Direction;
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct Cursor {
     x: i32,
     y: i32,
@@ -15,7 +15,7 @@ impl Cursor {
     }
 
     pub fn reflect(&mut self) {
-        match self.direction {
+        match self.direction() {
             Direction::North => self.set_direction(Direction::South),
             Direction::East => self.set_direction(Direction::West),
             Direction::South => self.set_direction(Direction::North),
