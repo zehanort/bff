@@ -9,11 +9,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let filepath = PathBuf::from(
-        args.iter()
-            .nth(1)
-            .expect("Befunge program file not provided"),
-    );
+    let filepath = PathBuf::from(args.get(1).expect("Befunge program file not provided"));
     let mut program = program::Program::from(filepath);
     program.run();
 }

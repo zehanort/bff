@@ -32,7 +32,6 @@ impl From<Vec<String>> for Program {
             .iter()
             .map(|line| {
                 format!("{:width$}", line, width = width as usize)
-                    .to_owned()
                     .chars()
                     .collect()
             })
