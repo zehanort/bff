@@ -9,8 +9,6 @@ use std::{
 use crate::cursor::Cursor;
 use crate::direction::Direction;
 
-const BEFUNGE_93_BOUNDS: (i32, i32) = (80, 25);
-
 #[derive(Default)]
 pub struct Program {
     grid: Vec<Vec<char>>,
@@ -86,11 +84,6 @@ impl Program {
     fn get_cell(&self, position: (i32, i32)) -> char {
         if position.1 >= self.grid.len() as i32 || position.0 >= self.grid[0].len() as i32 {
             ' '
-        } else if position.0 >= BEFUNGE_93_BOUNDS.0 || position.1 >= BEFUNGE_93_BOUNDS.1 {
-            panic!(
-                "\"get\" attempt outside the Befunge 93 bounding box -> (80x25), attempted ({}x{})",
-                position.0, position.1
-            );
         } else {
             self.grid[position.1 as usize][position.0 as usize]
         }
