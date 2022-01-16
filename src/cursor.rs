@@ -14,6 +14,15 @@ impl Cursor {
         self.direction = new_direction;
     }
 
+    pub fn reflect(&mut self) {
+        match self.direction {
+            Direction::North => self.set_direction(Direction::South),
+            Direction::East => self.set_direction(Direction::West),
+            Direction::South => self.set_direction(Direction::North),
+            Direction::West => self.set_direction(Direction::East),
+        }
+    }
+
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.x = x;
         self.y = y;
