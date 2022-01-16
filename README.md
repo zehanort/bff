@@ -52,7 +52,7 @@ Because I believe that writing a quirky interpreter is one of the best ways to l
 
 To use `bff`, you have 2 options:
 
-1. Download/clone this repository and build it:
+### 1. Download/clone this repository and build it:
 
 ```
 $ cd bff
@@ -61,7 +61,7 @@ $ cargo build --release
 
 The `bff` executable will now be under the `./target/release/` directory.
 
-1. Install it with cargo from `crates.io`:
+### 2. Install it with cargo from `crates.io`:
 
 ```
 $ cargo install bff
@@ -79,6 +79,7 @@ Hello world!
 ```
 
 Or, if you downloaded/cloned the repo:
+
 ```
 $ cargo run -- tests/bf93/hello_world.bf
 [...]
