@@ -1,5 +1,6 @@
 # bff
 Befunge Forever - A Befunge 93 (and soon 98) interpreter in Rust
+[![codecov](https://codecov.io/gh/zehanort/bff/branch/dev/graph/badge.svg)](https://codecov.io/gh/zehanort/bff)
 
 ---
 
@@ -14,7 +15,7 @@ Befunge 93 is an awesome [esoteric](https://en.wikipedia.org/wiki/Esoteric_progr
 where the program is not a sequence but a *grid* of instructions, like the following program that reads an integer from stdin and prints its factorial:
 
 ```befunge
-&>:1-:v v *_$.@ 
+&>:1-:v v *_$.@
  ^    _$>\:^
 ```
 
