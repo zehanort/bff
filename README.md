@@ -61,7 +61,7 @@ $ cargo build --release
 
 The `bff` executable will now be under the `./target/release/` directory.
 
-2. (not yet, but soon) Install it with cargo from `crates.io`:
+1. Install it with cargo from `crates.io`:
 
 ```
 $ cargo install bff

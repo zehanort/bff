@@ -7,7 +7,7 @@ description = "A Befunge 93 (and soon 98) interpreter in Rust"
 keywords = ["interpreter", "befunge"]
 categories = ["command-line-utilities", "compilers"]
 repository = "https://github.com/zehanort/bff"
-licence = "MIT"
+license = "MIT"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
