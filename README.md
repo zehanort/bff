@@ -1,6 +1,6 @@
-# bff
-Befunge Forever - A Befunge 93 (and soon 98) interpreter in Rust
-[![codecov](https://codecov.io/gh/zehanort/bff/branch/dev/graph/badge.svg)](https://codecov.io/gh/zehanort/bff)
+# bff (Befunge Forever) - A Befunge 93 (and soon 98) interpreter in Rust
+
+[![codecov](https://codecov.io/gh/zehanort/bff/branch/main/graph/badge.svg?token=IS0D12XPPA)](https://codecov.io/gh/zehanort/bff)
 
 ---
 
