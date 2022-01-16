@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.3"
+
+[dev-dependencies]
+assert_cmd = "2.0"
