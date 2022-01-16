@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/zehanort/bff/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/zehanort/bff/branch/main/graph/badge.svg?token=IS0D12XPPA)](https://codecov.io/gh/zehanort/bff)
+![Crates.io](https://img.shields.io/crates/v/bff)
 
 ## What?
 
