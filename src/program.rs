@@ -28,9 +28,6 @@ impl From<Vec<String>> for Program {
     fn from(code: Vec<String>) -> Self {
         let width = code.iter().map(|line| line.len()).max().unwrap() as i32;
         let height = code.len() as i32;
-        if width > BEFUNGE_93_BOUNDS.0 || height > BEFUNGE_93_BOUNDS.1 {
-            panic!("Befunge program should contain at max 80 instructions horizontally by 25 instructions vertically");
-        }
         // the `format!` adds padding to the right to make sure that
         // the grid has all the columns needed
         let grid: Vec<Vec<char>> = code
