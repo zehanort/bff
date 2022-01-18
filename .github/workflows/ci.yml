@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/README.md'
+      - '**/publish.yml'
   pull_request:
     branches: [main]
 
