@@ -34,12 +34,10 @@ You can read more about Befunge 98 [here](https://github.com/catseye/Funge-98/bl
 
 ## State?
 
-`bff` is under heavy development. It considers itself to be a working Befunge 93 interpreter, though
+`bff` is under heavy development (in the `dev` branch). It considers itself to be a working Befunge 93 interpreter, though
 (thanks to the [Mycology testsuite](https://github.com/Deewiant/Mycology) for some of the tests).
 
-Future goals are:
-1. Proper error handling instead of `?` and `unwrap`ing everywhere.
-2. Expand `bff` to be a fully fledged Befunge 98 interpreter, backwards compatible with Befunge 93.
+The main future goal is to expand `bff` to be a fully fledged Befunge 98 interpreter, backwards compatible with Befunge 93.
 
 **Any comments/remarks/criticism in the form of issues are welcome**.
 

@@ -1,15 +1,16 @@
+use anyhow::{Context, Result};
 use std::{env, path::PathBuf};
 
 mod cursor;
 mod delta;
 mod program;
 
-pub type Error = Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
-
-fn main() {
+fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    let filepath = PathBuf::from(args.get(1).expect("Befunge program file not provided"));
-    let mut program = program::Program::from(filepath);
-    program.run();
+    let filepath = PathBuf::from(
+        args.get(1)
+            .context("No Befunge 98 program file was provided")?,
+    );
+    let mut program = program::Program::try_from(filepath)?;
+    program.run()
 }
