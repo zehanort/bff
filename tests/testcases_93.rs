@@ -1,11 +1,9 @@
+use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use std::{fs, str};
-
-pub type Error = Box<dyn std::error::Error>;
-pub type Result<T> = std::result::Result<T, Error>;
 
 const TESTDIR: &str = "tests/bf93/";
 const SUFFIX: &str = ".bf";
