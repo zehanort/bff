@@ -8,6 +8,9 @@ on:
       - '**/publish.yml'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/README.md'
+      - '**/publish.yml'
 
 env:
   CARGO_TERM_COLOR: always
