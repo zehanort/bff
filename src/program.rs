@@ -1,3 +1,4 @@
+use anyhow::{bail, Context, Error, Result};
 use std::default::Default;
 use std::{
     fs::File,
@@ -23,8 +24,12 @@ impl From<Vec<String>> for Program {
     Constucts a `Program` from a `Vec` of `String`s i.e.,
     the lines of the Befunge source code.
     */
+
     fn from(code: Vec<String>) -> Self {
-        let width = code.iter().map(|line| line.len()).max().unwrap() as i32;
+        let width: i32 = match code.iter().map(|line| line.len()).max() {
+            Some(w) => w as i32,
+            None => 1, // empty program == infinite loop
+        };
         let height = code.len() as i32;
         // the `format!` adds padding to the right to make sure that
         // the grid has all the columns needed
@@ -36,7 +41,7 @@ impl From<Vec<String>> for Program {
                     .collect()
             })
             .collect();
-        Program {
+        Self {
             grid,
             bounds: (width, height),
             ..Default::default()
@@ -44,24 +49,28 @@ impl From<Vec<String>> for Program {
     }
 }
 
-impl From<PathBuf> for Program {
+impl TryFrom<PathBuf> for Program {
     /// Constructs a `Program` from the contents of a Befunge source code file.
-    fn from(filename: PathBuf) -> Program {
-        let file = File::open(filename).expect("no such file");
+    type Error = Error;
+
+    fn try_from(filename: PathBuf) -> Result<Self> {
+        let file = File::open(filename).context("Failed to open Befunge source file")?;
         let buf = BufReader::new(file);
         let code = buf
             .lines()
-            .map(|l| l.expect("Could not parse line"))
-            .collect::<Vec<String>>();
+            .enumerate()
+            .map(|(i, l)| l.context(format!("Failed to parse line {} of source file", i + 1)))
+            .collect::<Result<Vec<String>>>()
+            .context("Error while parsing lines of source file")?;
 
-        Program::from(code)
+        Ok(Program::from(code))
     }
 }
 
 impl Program {
     /// Helper function that converts an `i32` to a `char`.
     fn i32_to_char(i: i32) -> char {
-        let c: u8 = i.try_into().unwrap();
+        let c: u8 = i as u8;
         c as char
     }
 
@@ -116,7 +125,7 @@ impl Program {
     Returns `true` if the `@` cell was executed
     i.e., the program terminated, and `false` otherwise.
     */
-    fn execute_current_cell(&mut self) -> bool {
+    fn execute_current_cell(&mut self) -> Result<bool> {
         let position = self.cursor.position();
         let mut program_terminated = false;
 
@@ -133,6 +142,7 @@ impl Program {
             match x {
                 // Push this number on the stack
                 d if ('0'..='9').contains(&d) => {
+                    // these unwraps can't fail; we are sure we have a digit
                     self.push(d.to_digit(10).unwrap().try_into().unwrap())
                 }
                 // Addition: Pop a and b, then push a+b
@@ -223,12 +233,16 @@ impl Program {
                 // Pop value and output as an integer followed by a space
                 '.' => {
                     print!("{} ", self.pop());
-                    io::stdout().flush().unwrap();
+                    io::stdout()
+                        .flush()
+                        .context("Failed to write an integer to stdout")?;
                 }
                 // Pop value and output as ASCII character
                 ',' => {
                     print!("{}", Program::i32_to_char(self.pop()));
-                    io::stdout().flush().unwrap();
+                    io::stdout()
+                        .flush()
+                        .context("Failed to write a character to stdout")?;
                 }
                 // Bridge: Skip next cell
                 '#' => self.move_cursor(),
@@ -253,20 +267,23 @@ impl Program {
                     let mut input_text = String::new();
                     io::stdin()
                         .read_line(&mut input_text)
-                        .expect("failed to read from stdin");
+                        .context("Failed while reading a number from stdin")?;
 
-                    self.push(input_text.trim().parse::<i32>().unwrap());
+                    self.push(
+                        input_text
+                            .trim()
+                            .parse::<i32>()
+                            .context("Failed while parsing input from stdin as integer")?,
+                    );
                 }
                 // Ask user for a character and push its ASCII value
                 '~' => {
-                    let c = std::io::stdin()
-                        .bytes()
-                        .next()
-                        .and_then(|result| result.ok())
-                        .map(|byte| byte as i32)
-                        .unwrap();
-
-                    self.push(c);
+                    if let Some(b) = std::io::stdin().bytes().next() {
+                        let c = b.context("Failed while reading a character from stdin")?;
+                        self.push(c as i32);
+                    } else {
+                        bail!("Failed to read character from stdin")
+                    }
                 }
                 // End program
                 '@' => program_terminated = true,
@@ -282,16 +299,17 @@ impl Program {
         }
 
         self.move_cursor();
-        program_terminated
+        Ok(program_terminated)
     }
 
     /// Runs the Befunge program.
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Result<()> {
         loop {
-            let program_terminated = self.execute_current_cell();
+            let program_terminated = self.execute_current_cell().context("Runtime error")?;
             if program_terminated {
                 break;
             }
         }
+        Ok(())
     }
 }
