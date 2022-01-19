@@ -34,13 +34,11 @@ fn test_wrong_path() -> Result<()> {
 #[test]
 fn test_nan_in_stdin() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    let filename = testcase("factorial");
+    let filename = testcase("echo_int");
     cmd.arg(filename)
         .write_stdin("x")
         .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "Failed while parsing input from stdin as integer",
-        ));
+        .success()
+        .stdout("0 ");
     Ok(())
 }

@@ -10,6 +10,13 @@ use std::{
 use crate::cursor::Cursor;
 use crate::delta::Delta;
 
+macro_rules! warning {
+    ($message:expr) => {
+        e_yellow!("[WARNING] ");
+        eprintln!($message);
+    };
+}
+
 #[derive(Default)]
 pub struct Program {
     grid: Vec<Vec<char>>,
@@ -126,6 +133,17 @@ impl Program {
     i.e., the program terminated, and `false` otherwise.
     */
     fn execute_current_cell(&mut self) -> Result<bool> {
+        // define a helper macro for overflow checks
+        macro_rules! push_with_overflow_check {
+            ($a:expr, $op:ident, $b:expr, $message:expr) => {
+                let (res, overflowed) = $a.$op($b);
+                if overflowed {
+                    warning!($message);
+                }
+                self.push(res);
+            };
+        }
+
         let position = self.cursor.position();
         let mut program_terminated = false;
 
@@ -149,31 +167,64 @@ impl Program {
                 '+' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(a + b);
+                    push_with_overflow_check!(
+                        a,
+                        overflowing_add,
+                        b,
+                        "An addition resulted in overflow."
+                    );
                 }
                 // Subtraction: Pop a and b, then push b-a
                 '-' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b - a);
+                    push_with_overflow_check!(
+                        b,
+                        overflowing_sub,
+                        a,
+                        "A subtraction resulted in overflow."
+                    );
                 }
                 // Multiplication: Pop a and b, then push a*b
                 '*' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(a * b);
+                    push_with_overflow_check!(
+                        a,
+                        overflowing_mul,
+                        b,
+                        "A multiplication resulted in overflow."
+                    );
                 }
-                // Integer division: Pop a and b, then push b/a, rounded towards 0.
+                /*
+                Integer division: Pop a and b, then push b/a, rounded towards 0.
+                [SPEC] division by 0 returns 0
+                */
                 '/' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b / a);
+                    if a == 0 {
+                        warning!("Division by 0 occured. Will return 0 as per the language specification.");
+                        self.push(0);
+                    } else {
+                        push_with_overflow_check!(
+                            b,
+                            overflowing_div,
+                            a,
+                            "A division resulted in overflow."
+                        );
+                    }
                 }
                 // Modulo: Pop a and b, then push the remainder of the integer division of b/a.
                 '%' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b % a);
+                    push_with_overflow_check!(
+                        b,
+                        overflowing_rem,
+                        a,
+                        "A remainder operation resulted in overflow."
+                    );
                 }
                 // Logical NOT: Pop a value. If the value is zero, push 1; otherwise, push zero.
                 '!' => {
@@ -262,19 +313,53 @@ impl Program {
                     let c = self.get_cell((x, y));
                     self.push(c as i32);
                 }
-                // Ask user for a number and push it
+                /*
+                Ask user for a number and push it
+                [SPEC] Decimal input reads and discards characters until it encounters decimal digit characters,
+                at which point it reads a decimal number from those digits, up until (but not including) the point at which
+                input characters stop being digits, or the point where the next digit would cause a cell overflow, whichever comes first.
+
+                Design choice: If input is empty or it contains characters only, the command will read 0.
+                */
                 '&' => {
                     let mut input_text = String::new();
                     io::stdin()
                         .read_line(&mut input_text)
-                        .context("Failed while reading a number from stdin")?;
+                        .context("Failed while reading raw input from stdin")?;
 
-                    self.push(
-                        input_text
-                            .trim()
-                            .parse::<i32>()
-                            .context("Failed while parsing input from stdin as integer")?,
-                    );
+                    let mut res: i32 = 0;
+                    let mut discard_done = false;
+                    let mut negative = 1;
+                    for dchar in input_text.trim().chars() {
+                        if let Some(d) = dchar.to_digit(10) {
+                            if !discard_done {
+                                discard_done = true;
+                            }
+                            let (shifted_res, mul_overflowed) = res.overflowing_mul(10);
+                            // u32 -> i32 is safe here, it is just a single digit
+                            let (new_res, add_overflowed) = shifted_res.overflowing_add(d as i32);
+                            if mul_overflowed || add_overflowed {
+                                break;
+                            }
+                            res = new_res;
+                        } else {
+                            // maybe we start reading a negative number?
+                            if discard_done {
+                                break;
+                            } else if dchar == '-' {
+                                negative = -1;
+                                discard_done = true;
+                            }
+                        }
+                    }
+
+                    // check if negative underflows
+                    if negative == -1 {
+                        let (neg_res, underflowed) = res.overflowing_mul(negative);
+                        res = if underflowed { neg_res / 10 } else { neg_res };
+                    }
+
+                    self.push(res);
                 }
                 // Ask user for a character and push its ASCII value
                 '~' => {

@@ -144,3 +144,63 @@ fn test_getout() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_div_by_zero() -> Result<()> {
+    let filename = testcase("div_by_zero");
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(filename)
+        .assert()
+        .success()
+        .stdout("0 ")
+        .stderr(predicate::str::ends_with(
+            "Division by 0 occured. Will return 0 as per the language specification.\n",
+        ));
+
+    Ok(())
+}
+
+#[test]
+fn test_read_int_with_chars() -> Result<()> {
+    let filename = testcase("echo_int");
+
+    for (pre, suf) in vec![("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
+        let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+        cmd.arg(&filename)
+            .write_stdin(format!("{}12345{}", pre, suf))
+            .assert()
+            .success()
+            .stdout("12345 ");
+    }
+
+    for (pre, suf) in vec![("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
+        let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+        cmd.arg(&filename)
+            .write_stdin(format!("{}-12345{}", pre, suf))
+            .assert()
+            .success()
+            .stdout("-12345 ");
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_read_int_limits() -> Result<()> {
+    let filename = testcase("echo_int");
+    for (n_in, n_out) in vec![
+        ("2147483647", "2147483647 "),
+        ("2147483648", "214748364 "),
+        ("-2147483647", "-2147483647 "),
+        ("-2147483648", "-214748364 "),
+    ] {
+        let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+        cmd.arg(&filename)
+            .write_stdin(n_in)
+            .assert()
+            .success()
+            .stdout(n_out);
+    }
+
+    Ok(())
+}
