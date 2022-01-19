@@ -1,6 +1,9 @@
 use anyhow::{Context, Result};
 use std::{env, path::PathBuf};
 
+#[macro_use]
+extern crate colour;
+
 mod cursor;
 mod delta;
 mod program;

@@ -144,3 +144,18 @@ fn test_getout() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_div_by_zero() -> Result<()> {
+    let filename = testcase("div_by_zero");
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(filename)
+        .assert()
+        .success()
+        .stdout("0 ")
+        .stderr(predicate::str::ends_with(
+            "Division by 0 occured. Will return 0 as per the language specification.\n",
+        ));
+
+    Ok(())
+}

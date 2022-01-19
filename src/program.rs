@@ -10,6 +10,13 @@ use std::{
 use crate::cursor::Cursor;
 use crate::delta::Delta;
 
+macro_rules! warning {
+    ($message:expr) => {
+        e_yellow!("[WARNING] ");
+        eprintln!($message);
+    };
+}
+
 #[derive(Default)]
 pub struct Program {
     grid: Vec<Vec<char>>,
@@ -126,6 +133,17 @@ impl Program {
     i.e., the program terminated, and `false` otherwise.
     */
     fn execute_current_cell(&mut self) -> Result<bool> {
+        // define a helper macro for overflow checks
+        macro_rules! push_with_overflow_check {
+            ($a:expr, $op:ident, $b:expr, $message:expr) => {
+                let (res, overflowed) = $a.$op($b);
+                if overflowed {
+                    warning!($message);
+                }
+                self.push(res);
+            };
+        }
+
         let position = self.cursor.position();
         let mut program_terminated = false;
 
@@ -149,31 +167,64 @@ impl Program {
                 '+' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(a + b);
+                    push_with_overflow_check!(
+                        a,
+                        overflowing_add,
+                        b,
+                        "An addition resulted in overflow."
+                    );
                 }
                 // Subtraction: Pop a and b, then push b-a
                 '-' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b - a);
+                    push_with_overflow_check!(
+                        b,
+                        overflowing_sub,
+                        a,
+                        "A subtraction resulted in overflow."
+                    );
                 }
                 // Multiplication: Pop a and b, then push a*b
                 '*' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(a * b);
+                    push_with_overflow_check!(
+                        a,
+                        overflowing_mul,
+                        b,
+                        "A multiplication resulted in overflow."
+                    );
                 }
-                // Integer division: Pop a and b, then push b/a, rounded towards 0.
+                /*
+                Integer division: Pop a and b, then push b/a, rounded towards 0.
+                [SPEC] division by 0 returns 0
+                */
                 '/' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b / a);
+                    if a == 0 {
+                        warning!("Division by 0 occured. Will return 0 as per the language specification.");
+                        self.push(0);
+                    } else {
+                        push_with_overflow_check!(
+                            b,
+                            overflowing_div,
+                            a,
+                            "A division resulted in overflow."
+                        );
+                    }
                 }
                 // Modulo: Pop a and b, then push the remainder of the integer division of b/a.
                 '%' => {
                     let a = self.pop();
                     let b = self.pop();
-                    self.push(b % a);
+                    push_with_overflow_check!(
+                        b,
+                        overflowing_rem,
+                        a,
+                        "A remainder operation resulted in overflow."
+                    );
                 }
                 // Logical NOT: Pop a value. If the value is zero, push 1; otherwise, push zero.
                 '!' => {
