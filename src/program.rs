@@ -313,19 +313,53 @@ impl Program {
                     let c = self.get_cell((x, y));
                     self.push(c as i32);
                 }
-                // Ask user for a number and push it
+                /*
+                Ask user for a number and push it
+                [SPEC] Decimal input reads and discards characters until it encounters decimal digit characters,
+                at which point it reads a decimal number from those digits, up until (but not including) the point at which
+                input characters stop being digits, or the point where the next digit would cause a cell overflow, whichever comes first.
+
+                Design choice: If input is empty or it contains characters only, the command will read 0.
+                */
                 '&' => {
                     let mut input_text = String::new();
                     io::stdin()
                         .read_line(&mut input_text)
-                        .context("Failed while reading a number from stdin")?;
+                        .context("Failed while reading raw input from stdin")?;
 
-                    self.push(
-                        input_text
-                            .trim()
-                            .parse::<i32>()
-                            .context("Failed while parsing input from stdin as integer")?,
-                    );
+                    let mut res: i32 = 0;
+                    let mut discard_done = false;
+                    let mut negative = 1;
+                    for dchar in input_text.trim().chars() {
+                        if let Some(d) = dchar.to_digit(10) {
+                            if !discard_done {
+                                discard_done = true;
+                            }
+                            let (shifted_res, mul_overflowed) = res.overflowing_mul(10);
+                            // u32 -> i32 is safe here, it is just a single digit
+                            let (new_res, add_overflowed) = shifted_res.overflowing_add(d as i32);
+                            if mul_overflowed || add_overflowed {
+                                break;
+                            }
+                            res = new_res;
+                        } else {
+                            // maybe we start reading a negative number?
+                            if discard_done {
+                                break;
+                            } else if dchar == '-' {
+                                negative = -1;
+                                discard_done = true;
+                            }
+                        }
+                    }
+
+                    // check if negative underflows
+                    if negative == -1 {
+                        let (neg_res, underflowed) = res.overflowing_mul(negative);
+                        res = if underflowed { neg_res / 10 } else { neg_res };
+                    }
+
+                    self.push(res);
                 }
                 // Ask user for a character and push its ASCII value
                 '~' => {
