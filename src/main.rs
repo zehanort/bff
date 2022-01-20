@@ -5,6 +5,7 @@ use clap::Parser;
 extern crate colour;
 
 mod args;
+mod commands;
 mod cursor;
 mod delta;
 mod program;
