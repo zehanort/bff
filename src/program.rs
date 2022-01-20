@@ -12,7 +12,7 @@ use crate::delta::Delta;
 
 macro_rules! warning {
     ($message:expr) => {
-        e_yellow!("[WARNING] ");
+        e_yellow!("warning: ");
         eprintln!($message);
     };
 }
