@@ -105,7 +105,7 @@ impl Program<i32> {
                     // Push this hex number on the stack
                     d if ('a'..='f').contains(&d) => {
                         // these unwraps can't fail; we are sure we have a (hex) digit
-                        self.push(d.to_digit(10).unwrap().try_into().unwrap());
+                        self.push(d.to_digit(16).unwrap().try_into().unwrap());
                     }
                     // Addition: Pop a and b, then push a+b
                     '+' => {
