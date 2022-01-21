@@ -22,17 +22,13 @@ impl From<Vec<Vec<u8>>> for Program<i32> {
     */
 
     fn from(mut code: Vec<Vec<u8>>) -> Self {
-        let width = match code.iter().map(|line| line.len()).max() {
-            Some(w) => w,
-            None => 1, // empty program == infinite loop
-        };
+        let width = code.iter().map(|line| line.len()).max().unwrap_or(1);
         let height: i32 = code.len() as i32;
 
         // make all lines have the same width
-        for i in 0..code.len() {
-            code[i].resize(width, 32);
+        for line in &mut code {
+            line.resize(width, 32);
         }
-        assert!(code.iter().all(|line| line.len() == width));
 
         let grid = code
             .iter()
@@ -63,5 +59,23 @@ impl TryFrom<PathBuf> for Program<i32> {
         let code: Vec<Vec<u8>> = code.iter().map(|line| line.to_vec()).collect();
 
         Ok(Program::from(code))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_all_lines_same_width() {
+        let program = Program::from(vec![
+            b"123".to_vec(),
+            b"12345678".to_vec(),
+            vec![],
+            b"12345".to_vec(),
+        ]);
+        let width = program.grid[0].len();
+        assert!(program.grid.iter().all(|line| line.len() == width));
     }
 }
