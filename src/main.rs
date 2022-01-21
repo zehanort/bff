@@ -17,7 +17,7 @@ fn main() -> Result<()> {
             None => {
                 // unwrap is safe here
                 // args.ucode is a "Some" for sure at this point
-                let unefunge_code = args.ucode.unwrap();
+                let unefunge_code = args.ucode.unwrap().bytes().collect();
                 program::Program::from(vec![unefunge_code])
             }
         };

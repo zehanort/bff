@@ -12,7 +12,7 @@ macro_rules! warning {
     };
 }
 
-impl Program {
+impl Program<i32> {
     /// Helper function that converts an `i32` to a `char`.
     fn i32_to_char(i: i32) -> char {
         let c: u8 = i as u8;
@@ -33,17 +33,17 @@ impl Program {
         }
     }
 
-    /// Returns the `char` on the `position` coordinates of the program grid.
-    fn get_cell(&self, position: (i32, i32)) -> char {
+    /// Returns the `i32` on the `position` coordinates of the program grid.
+    fn get_cell(&self, position: (i32, i32)) -> i32 {
         if position.1 >= self.grid.len() as i32 || position.0 >= self.grid[0].len() as i32 {
-            ' '
+            32 // space
         } else {
             self.grid[position.1 as usize][position.0 as usize]
         }
     }
 
     /// Puts `c` on the `position` coordinates of the program grid.
-    fn put_cell(&mut self, position: (i32, i32), c: char) {
+    fn put_cell(&mut self, position: (i32, i32), c: i32) {
         self.grid[position.1 as usize][position.0 as usize] = c;
     }
 
@@ -89,230 +89,235 @@ impl Program {
 
         // special case: string mode ON
         if self.string_mode {
-            if x == '"' {
+            if x == '"' as i32 {
                 self.toggle_string_mode();
             } else {
                 self.push(x as i32);
             }
         } else {
-            match x {
-                // Push this decimal number on the stack
-                d if ('0'..='9').contains(&d) => {
-                    // these unwraps can't fail; we are sure we have a digit
-                    self.push(d.to_digit(10).unwrap().try_into().unwrap())
-                }
-                // Push this hex number on the stack
-                d if ('a'..='f').contains(&d) => {
-                    // these unwraps can't fail; we are sure we have a (hex) digit
-                    self.push(d.to_digit(16).unwrap().try_into().unwrap())
-                }
-                // Addition: Pop a and b, then push a+b
-                '+' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    push_with_overflow_check!(
-                        a,
-                        overflowing_add,
-                        b,
-                        "An addition resulted in overflow."
-                    );
-                }
-                // Subtraction: Pop a and b, then push b-a
-                '-' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    push_with_overflow_check!(
-                        b,
-                        overflowing_sub,
-                        a,
-                        "A subtraction resulted in overflow."
-                    );
-                }
-                // Multiplication: Pop a and b, then push a*b
-                '*' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    push_with_overflow_check!(
-                        a,
-                        overflowing_mul,
-                        b,
-                        "A multiplication resulted in overflow."
-                    );
-                }
-                /*
-                Integer division: Pop a and b, then push b/a, rounded towards 0.
-                [SPEC] division by 0 returns 0
-                */
-                '/' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    if a == 0 {
-                        warning!("Division by 0 occured. Will return 0 as per the language specification.");
-                        self.push(0);
-                    } else {
+            if let Some(xchar) = char::from_u32(x as u32) {
+                match xchar {
+                    // Push this decimal number on the stack
+                    d if ('0'..='9').contains(&d) => {
+                        // these unwraps can't fail; we are sure we have a digit
+                        self.push(d.to_digit(10).unwrap().try_into().unwrap());
+                    }
+                    // Push this hex number on the stack
+                    d if ('a'..='f').contains(&d) => {
+                        // these unwraps can't fail; we are sure we have a (hex) digit
+                        self.push(d.to_digit(10).unwrap().try_into().unwrap());
+                    }
+                    // Addition: Pop a and b, then push a+b
+                    '+' => {
+                        let (a, b) = (self.pop(), self.pop());
                         push_with_overflow_check!(
-                            b,
-                            overflowing_div,
                             a,
-                            "A division resulted in overflow."
+                            overflowing_add,
+                            b,
+                            "An addition resulted in overflow."
                         );
                     }
-                }
-                // Modulo: Pop a and b, then push the remainder of the integer division of b/a.
-                '%' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    push_with_overflow_check!(
-                        b,
-                        overflowing_rem,
-                        a,
-                        "A remainder operation resulted in overflow."
-                    );
-                }
-                // Logical NOT: Pop a value. If the value is zero, push 1; otherwise, push zero.
-                '!' => {
-                    let a = self.pop();
-                    self.push(if a == 0 { 1 } else { 0 })
-                }
-                // Greater than: Pop a and b, then push 1 if b>a, otherwise zero.
-                '`' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    self.push(if b > a { 1 } else { 0 })
-                }
-                // Start moving right
-                '>' => self.cursor.set_delta(Delta::east()),
-                // Start moving left
-                '<' => self.cursor.set_delta(Delta::west()),
-                // Start moving up
-                '^' => self.cursor.set_delta(Delta::north()),
-                // Start moving down
-                'v' => self.cursor.set_delta(Delta::south()),
-                // Start moving in a random cardinal direction
-                '?' => self.cursor.set_delta(rand::random()),
-                // Pop a value; move right if value=0, left otherwise
-                '_' => {
-                    let a = self.pop();
-                    self.cursor
-                        .set_delta(if a == 0 { Delta::east() } else { Delta::west() })
-                }
-                // Pop a value; move down if value=0, up otherwise
-                '|' => {
-                    let a = self.pop();
-                    self.cursor.set_delta(if a == 0 {
-                        Delta::south()
-                    } else {
-                        Delta::north()
-                    })
-                }
-                // Start string mode: push each character's ASCII value all the way up to the next "
-                '"' => self.toggle_string_mode(),
-                // Duplicate value on top of the stack
-                ':' => {
-                    let a = self.pop();
-                    self.push(a);
-                    self.push(a);
-                }
-                // Swap two values on top of the stack
-                '\\' => {
-                    let (a, b) = (self.pop(), self.pop());
-                    self.push(a);
-                    self.push(b);
-                }
-                // Pop value from the stack and discard it
-                '$' => {
-                    self.stack.pop();
-                }
-                // Pop value and output as an integer followed by a space
-                '.' => {
-                    print!("{} ", self.pop());
-                    io::stdout()
-                        .flush()
-                        .context("Failed to write an integer to stdout")?;
-                }
-                // Pop value and output as ASCII character
-                ',' => {
-                    print!("{}", Program::i32_to_char(self.pop()));
-                    io::stdout()
-                        .flush()
-                        .context("Failed to write a character to stdout")?;
-                }
-                // Bridge: Skip next cell
-                '#' => self.move_cursor(),
-                // A "put" call (a way to store a value for later use).
-                // Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
-                'p' => {
-                    let (y, x, v) = (self.pop(), self.pop(), self.pop());
-                    self.put_cell((x, y), Program::i32_to_char(v));
-                }
-                // A "get" call (a way to retrieve data in storage).
-                // Pop y and x, then push ASCII value of the character at that position in the program
-                'g' => {
-                    let (y, x) = (self.pop(), self.pop());
-                    let c = self.get_cell((x, y));
-                    self.push(c as i32);
-                }
-                /*
-                Ask user for a number and push it
-                [SPEC] Decimal input reads and discards characters until it encounters decimal digit characters,
-                at which point it reads a decimal number from those digits, up until (but not including) the point at which
-                input characters stop being digits, or the point where the next digit would cause a cell overflow, whichever comes first.
-
-                Design choice: If input is empty or it contains characters only, the command will read 0.
-                */
-                '&' => {
-                    let mut input_text = String::new();
-                    io::stdin()
-                        .read_line(&mut input_text)
-                        .context("Failed while reading raw input from stdin")?;
-
-                    let mut res: i32 = 0;
-                    let mut discard_done = false;
-                    let mut negative = 1;
-                    for dchar in input_text.trim().chars() {
-                        if let Some(d) = dchar.to_digit(10) {
-                            if !discard_done {
-                                discard_done = true;
-                            }
-                            let (shifted_res, mul_overflowed) = res.overflowing_mul(10);
-                            // u32 -> i32 is safe here, it is just a single digit
-                            let (new_res, add_overflowed) = shifted_res.overflowing_add(d as i32);
-                            if mul_overflowed || add_overflowed {
-                                break;
-                            }
-                            res = new_res;
+                    // Subtraction: Pop a and b, then push b-a
+                    '-' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        push_with_overflow_check!(
+                            b,
+                            overflowing_sub,
+                            a,
+                            "A subtraction resulted in overflow."
+                        );
+                    }
+                    // Multiplication: Pop a and b, then push a*b
+                    '*' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        push_with_overflow_check!(
+                            a,
+                            overflowing_mul,
+                            b,
+                            "A multiplication resulted in overflow."
+                        );
+                    }
+                    /*
+                    Integer division: Pop a and b, then push b/a, rounded towards 0.
+                    [SPEC] division by 0 returns 0
+                    */
+                    '/' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        if a == 0 {
+                            warning!("Division by 0 occured. Will return 0 as per the language specification.");
+                            self.push(0);
                         } else {
-                            // maybe we start reading a negative number?
-                            if discard_done {
-                                break;
-                            } else if dchar == '-' {
-                                negative = -1;
-                                discard_done = true;
-                            }
+                            push_with_overflow_check!(
+                                b,
+                                overflowing_div,
+                                a,
+                                "A division resulted in overflow."
+                            );
                         }
                     }
-
-                    // check if negative underflows
-                    if negative == -1 {
-                        let (neg_res, underflowed) = res.overflowing_mul(negative);
-                        res = if underflowed { neg_res / 10 } else { neg_res };
+                    // Modulo: Pop a and b, then push the remainder of the integer division of b/a.
+                    '%' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        push_with_overflow_check!(
+                            b,
+                            overflowing_rem,
+                            a,
+                            "A remainder operation resulted in overflow."
+                        );
                     }
-
-                    self.push(res);
-                }
-                // Ask user for a character and push its ASCII value
-                '~' => {
-                    if let Some(b) = std::io::stdin().bytes().next() {
-                        let c = b.context("Failed while reading a character from stdin")?;
+                    // Logical NOT: Pop a value. If the value is zero, push 1; otherwise, push zero.
+                    '!' => {
+                        let a = self.pop();
+                        self.push(if a == 0 { 1 } else { 0 })
+                    }
+                    // Greater than: Pop a and b, then push 1 if b>a, otherwise zero.
+                    '`' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        self.push(if b > a { 1 } else { 0 })
+                    }
+                    // Start moving right
+                    '>' => self.cursor.set_delta(Delta::east()),
+                    // Start moving left
+                    '<' => self.cursor.set_delta(Delta::west()),
+                    // Start moving up
+                    '^' => self.cursor.set_delta(Delta::north()),
+                    // Start moving down
+                    'v' => self.cursor.set_delta(Delta::south()),
+                    // Start moving in a random cardinal direction
+                    '?' => self.cursor.set_delta(rand::random()),
+                    // Pop a value; move right if value=0, left otherwise
+                    '_' => {
+                        let a = self.pop();
+                        self.cursor
+                            .set_delta(if a == 0 { Delta::east() } else { Delta::west() })
+                    }
+                    // Pop a value; move down if value=0, up otherwise
+                    '|' => {
+                        let a = self.pop();
+                        self.cursor.set_delta(if a == 0 {
+                            Delta::south()
+                        } else {
+                            Delta::north()
+                        })
+                    }
+                    // Start string mode: push each character's ASCII value all the way up to the next "
+                    '"' => self.toggle_string_mode(),
+                    // Duplicate value on top of the stack
+                    ':' => {
+                        let a = self.pop();
+                        self.push(a);
+                        self.push(a);
+                    }
+                    // Swap two values on top of the stack
+                    '\\' => {
+                        let (a, b) = (self.pop(), self.pop());
+                        self.push(a);
+                        self.push(b);
+                    }
+                    // Pop value from the stack and discard it
+                    '$' => {
+                        self.stack.pop();
+                    }
+                    // Pop value and output as an integer followed by a space
+                    '.' => {
+                        print!("{} ", self.pop());
+                        io::stdout()
+                            .flush()
+                            .context("Failed to write an integer to stdout")?;
+                    }
+                    // Pop value and output as ASCII character
+                    ',' => {
+                        print!("{}", Program::i32_to_char(self.pop()));
+                        io::stdout()
+                            .flush()
+                            .context("Failed to write a character to stdout")?;
+                    }
+                    // Bridge: Skip next cell
+                    '#' => self.move_cursor(),
+                    // A "put" call (a way to store a value for later use).
+                    // Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
+                    'p' => {
+                        let (y, x, v) = (self.pop(), self.pop(), self.pop());
+                        self.put_cell((x, y), v);
+                    }
+                    // A "get" call (a way to retrieve data in storage).
+                    // Pop y and x, then push ASCII value of the character at that position in the program
+                    'g' => {
+                        let (y, x) = (self.pop(), self.pop());
+                        let c = self.get_cell((x, y));
                         self.push(c as i32);
-                    } else {
-                        bail!("Failed to read character from stdin")
                     }
+                    /*
+                    Ask user for a number and push it
+                    [SPEC] Decimal input reads and discards characters until it encounters decimal digit characters,
+                    at which point it reads a decimal number from those digits, up until (but not including) the point at which
+                    input characters stop being digits, or the point where the next digit would cause a cell overflow, whichever comes first.
+
+                    Design choice: If input is empty or it contains characters only, the command will read 0.
+                    */
+                    '&' => {
+                        let mut input_text = String::new();
+                        io::stdin()
+                            .read_line(&mut input_text)
+                            .context("Failed while reading raw input from stdin")?;
+
+                        let mut res: i32 = 0;
+                        let mut discard_done = false;
+                        let mut negative = 1;
+                        for dchar in input_text.trim().chars() {
+                            if let Some(d) = dchar.to_digit(10) {
+                                if !discard_done {
+                                    discard_done = true;
+                                }
+                                let (shifted_res, mul_overflowed) = res.overflowing_mul(10);
+                                // u32 -> i32 is safe here, it is just a single digit
+                                let (new_res, add_overflowed) =
+                                    shifted_res.overflowing_add(d as i32);
+                                if mul_overflowed || add_overflowed {
+                                    break;
+                                }
+                                res = new_res;
+                            } else {
+                                // maybe we start reading a negative number?
+                                if discard_done {
+                                    break;
+                                } else if dchar == '-' {
+                                    negative = -1;
+                                    discard_done = true;
+                                }
+                            }
+                        }
+
+                        // check if negative underflows
+                        if negative == -1 {
+                            let (neg_res, underflowed) = res.overflowing_mul(negative);
+                            res = if underflowed { neg_res / 10 } else { neg_res };
+                        }
+
+                        self.push(res);
+                    }
+                    // Ask user for a character and push its ASCII value
+                    '~' => {
+                        if let Some(b) = std::io::stdin().bytes().next() {
+                            let c = b.context("Failed while reading a character from stdin")?;
+                            self.push(c as i32);
+                        } else {
+                            bail!("Failed to read character from stdin")
+                        }
+                    }
+                    // End program
+                    '@' => program_terminated = true,
+                    // No-op. Does nothing
+                    ' ' => {}
+                    // Every other character
+                    // Note that string mode is OFF here
+                    // (we checked the "ON" case before the match statement)
+                    // as per the standard, we will reflect
+                    // (imitating the "r" instruction which will be added later...)
+                    _ => self.cursor.reflect(),
                 }
-                // End program
-                '@' => program_terminated = true,
-                // No-op. Does nothing
-                ' ' => {}
-                // Every other character
-                // Note that string mode is OFF here
-                // (we checked the "ON" case before the match statement)
-                // as per the standard, we will reflect
-                // (imitating the "r" instruction which will be added later...)
-                _ => self.cursor.reflect(),
+            } else {
+                self.cursor.reflect()
             }
         }
 

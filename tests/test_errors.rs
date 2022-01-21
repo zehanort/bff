@@ -29,7 +29,7 @@ fn test_wrong_path() -> Result<()> {
         .assert()
         .failure()
         .stderr(predicate::str::starts_with(
-            "Error: Failed to open Befunge source file",
+            "Error: Failed to read Befunge source file",
         ));
     Ok(())
 }

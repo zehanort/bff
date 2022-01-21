@@ -1,67 +1,66 @@
 use anyhow::{Context, Error, Result};
-use std::default::Default;
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
-    path::PathBuf,
-};
+use bstr::ByteSlice;
+use std::{default::Default, fs, path::PathBuf};
 
 use crate::cursor::Cursor;
 
 mod commands;
 
 #[derive(Default)]
-pub struct Program {
-    grid: Vec<Vec<char>>,
+pub struct Program<T> {
+    grid: Vec<Vec<T>>,
     cursor: Cursor,
-    bounds: (i32, i32),
-    stack: Vec<i32>,
+    bounds: (T, T),
+    stack: Vec<T>,
     string_mode: bool,
 }
 
-impl From<Vec<String>> for Program {
+impl From<Vec<Vec<u8>>> for Program<i32> {
     /**
     Constucts a `Program` from a `Vec` of `String`s i.e.,
     the lines of the Befunge source code.
     */
 
-    fn from(code: Vec<String>) -> Self {
-        let width: i32 = match code.iter().map(|line| line.len()).max() {
-            Some(w) => w as i32,
+    fn from(mut code: Vec<Vec<u8>>) -> Self {
+        let width = match code.iter().map(|line| line.len()).max() {
+            Some(w) => w,
             None => 1, // empty program == infinite loop
         };
-        let height = code.len() as i32;
-        // the `format!` adds padding to the right to make sure that
-        // the grid has all the columns needed
-        let grid: Vec<Vec<char>> = code
+        let height: i32 = code.len() as i32;
+
+        // make all lines have the same width
+        for i in 0..code.len() {
+            code[i].resize(width, 32);
+        }
+        assert!(code.iter().all(|line| line.len() == width));
+
+        let grid = code
             .iter()
-            .map(|line| {
-                format!("{:width$}", line, width = width as usize)
-                    .chars()
-                    .collect()
-            })
+            .map(|line| line.iter().map(|b| *b as i32).collect())
             .collect();
+
         Self {
             grid,
-            bounds: (width, height),
+            bounds: (width as i32, height),
             ..Default::default()
         }
     }
 }
 
-impl TryFrom<PathBuf> for Program {
+impl TryFrom<PathBuf> for Program<i32> {
     /// Constructs a `Program` from the contents of a Befunge source code file.
     type Error = Error;
 
     fn try_from(filename: PathBuf) -> Result<Self> {
-        let file = File::open(filename).context("Failed to open Befunge source file")?;
-        let buf = BufReader::new(file);
-        let code = buf
-            .lines()
-            .enumerate()
-            .map(|(i, l)| l.context(format!("Failed to parse line {} of source file", i + 1)))
-            .collect::<Result<Vec<String>>>()
-            .context("Error while parsing lines of source file")?;
+        // step 1: read raw bytes from file
+        let contents = fs::read(filename).context("Failed to read Befunge source file")?;
+        // step 2: split in lines by...
+        let code: Vec<&[u8]> = contents
+            .split_str(b"\r\n") // ...\r\n
+            .flat_map(|line| line.split_str(b"\r")) // ...\r
+            .flat_map(|line| line.split_str(b"\n")) // ...and \n
+            .collect();
+        let code: Vec<Vec<u8>> = code.iter().map(|line| line.to_vec()).collect();
 
         Ok(Program::from(code))
     }

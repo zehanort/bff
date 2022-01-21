@@ -34,8 +34,8 @@ pub fn start() -> Result<()> {
         // step 5: add a "@" instruction at the end, for safety
         code.push('@');
 
-        // step 5: evaluate code
-        let mut program = Program::from(vec![code]);
+        // step 6: evaluate code
+        let mut program = Program::from(vec![code.into_bytes()]);
         program.run()?;
         println!();
     }
