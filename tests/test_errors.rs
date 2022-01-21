@@ -11,15 +11,6 @@ fn testcase(name: &str) -> String {
 }
 
 #[test]
-fn test_no_file_no_une() -> Result<()> {
-    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    cmd.assert().success().stderr(predicate::str::contains(
-        "No execution targets specified. Exiting.",
-    ));
-    Ok(())
-}
-
-#[test]
 fn test_file_and_une() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
     cmd.arg("sengelebengele")
