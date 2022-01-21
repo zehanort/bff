@@ -29,7 +29,7 @@ impl Cursor {
 
     /// Reflects delta to point to "the opposite way".
     pub fn reflect(&mut self) {
-        self.delta.reflect();
+        self.delta *= -1;
     }
 
     /**

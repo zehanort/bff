@@ -3,10 +3,18 @@ use rand::{
     Rng,
 };
 use std::default::Default;
+use std::ops;
 
 pub struct Delta {
     pub x: i32,
     pub y: i32,
+}
+
+impl ops::MulAssign<i32> for Delta {
+    fn mul_assign(&mut self, factor: i32) {
+        self.x *= factor;
+        self.y *= factor;
+    }
 }
 
 impl Delta {
@@ -27,8 +35,7 @@ impl Delta {
     }
 
     pub fn reflect(&mut self) {
-        self.x *= -1;
-        self.y *= -1;
+        *self *= -1;
     }
 }
 
