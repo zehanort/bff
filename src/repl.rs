@@ -27,7 +27,7 @@ pub fn start() -> Result<()> {
         }
 
         // step 4: check empty line
-        if code == "" {
+        if code.is_empty() {
             continue;
         }
 
