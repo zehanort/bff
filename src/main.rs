@@ -1,11 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 
-#[macro_use]
-extern crate colour;
-
 mod args;
-mod commands;
 mod cursor;
 mod delta;
 mod program;
@@ -25,7 +21,6 @@ fn main() -> Result<()> {
                 program::Program::from(vec![unefunge_code])
             }
         };
-
         program.run()
     }
 }
