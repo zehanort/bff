@@ -63,6 +63,24 @@ impl Program<i32> {
     }
 
     /**
+    Returns the next cell at the direction of `delta`,
+    respecting the wraparound rules.
+    */
+    fn peek(&mut self) -> i32 {
+        self.move_cursor();
+        let next_cell = self.get_cell(self.cursor.position());
+        self.cursor.mul_delta(-1);
+        self.move_cursor();
+        self.cursor.mul_delta(-1);
+        next_cell
+    }
+
+    /*
+    INSTRUCTION SET IMPLEMENTATIONS
+    One method for each instruction follows
+    */
+
+    /**
     Executes the cell on which the `cursor` lies.
     For the full Befunge 93 instruction list see
     [here](https://en.wikipedia.org/wiki/Befunge#Befunge-93_instruction_list).
@@ -307,6 +325,31 @@ impl Program<i32> {
                 '@' => program_terminated = true,
                 // No-op. Does nothing
                 ' ' => {}
+                // Turn left
+                '[' => self.cursor.turn_left(),
+                // Turn right
+                ']' => self.cursor.turn_right(),
+                // Jump over i.e., execute nothing until next ";"
+                ';' => loop {
+                    self.move_cursor();
+                    if char::from_u32(self.get_cell(self.cursor.position()) as u32)
+                        .unwrap_or_default()
+                        == ';'
+                    {
+                        break;
+                    }
+                },
+                // Iterate i.e., execute the nex
+                'k' => loop {
+                    let iters = self.pop();
+                    self.move_cursor();
+                    if !vec![' ', ';'].contains(
+                        &char::from_u32(self.get_cell(self.cursor.position()) as u32)
+                            .unwrap_or_default(),
+                    ) {
+                        break;
+                    }
+                },
                 // Every other character
                 // Note that string mode is OFF here
                 // (we checked the "ON" case before the match statement)
