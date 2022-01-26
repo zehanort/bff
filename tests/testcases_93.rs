@@ -59,19 +59,6 @@ fn test_quine() -> Result<()> {
 }
 
 #[test]
-fn test_mycorand() -> Result<()> {
-    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    let filename = testcase("mycorand");
-    let predicate_fn = predicate::str::is_match(
-        "The directions were generated in the order [<>^v]{4}\n\\? was met [0-9]+ times\n",
-    )
-    .unwrap();
-    cmd.arg(filename).assert().success().stdout(predicate_fn);
-
-    Ok(())
-}
-
-#[test]
 fn test_compare() -> Result<()> {
     let filename = testcase("compare");
     for (a, b, comp) in vec![("12", "135", "<"), ("53", "-123", ">"), ("42", "42", "=")] {

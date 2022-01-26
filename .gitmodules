@@ -1,0 +1,3 @@
+[submodule "tests/mycology"]
+	path = tests/mycology
+	url = git@github.com:Deewiant/Mycology.git
