@@ -4,8 +4,7 @@ use std::{default::Default, fs, path::PathBuf};
 
 use crate::cursor::Cursor;
 
-mod instructions;
-mod interface;
+mod vm;
 
 #[derive(Default)]
 pub struct Program<T> {
