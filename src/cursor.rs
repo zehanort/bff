@@ -22,12 +22,6 @@ impl Cursor {
         self.delta = new_delta;
     }
 
-    /// Multiplies `delta` by `factor`, pointwise.
-    pub fn mul_delta(&mut self, factor: i32) {
-        self.x *= factor;
-        self.y *= factor;
-    }
-
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.x = x;
         self.y = y;
