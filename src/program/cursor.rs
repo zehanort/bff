@@ -1,9 +1,9 @@
 use std::default::Default;
 
-use crate::program::delta::Delta;
+use super::delta::Delta;
 
 #[derive(Default)]
-pub struct Cursor {
+pub(super) struct Cursor {
     x: i32,
     y: i32,
     delta: Delta,
@@ -29,7 +29,7 @@ impl Cursor {
 
     /// Reflects delta to point to "the opposite way".
     pub fn reflect(&mut self) {
-        self.delta *= -1;
+        self.delta.reflect();
     }
 
     /// Rotates delta 90 degrees to the left (counterclockwise).

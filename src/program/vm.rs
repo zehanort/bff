@@ -1,5 +1,4 @@
-use crate::program::delta::Delta;
-
+use super::delta::Delta;
 use super::Program;
 use anyhow::{bail, Context, Result};
 use colour::e_yellow;
@@ -43,8 +42,40 @@ impl Program<i32> {
     }
 
     /// Puts `c` on the `position` coordinates of the program grid.
-    fn put_cell(&mut self, position: (i32, i32), c: i32) {
-        self.grid[position.1 as usize][position.0 as usize] = c;
+    fn put_cell(&mut self, position: (i32, i32), c: i32) -> Result<()> {
+        let (x, y) = position;
+        // let ymax = self
+        //     .grid
+        //     .len()
+        //     .try_into()
+        //     .context(format!("Failed to convert integer {} to native size", x))?;
+        // let xmax = self.grid[0]
+        //     .len()
+        //     .try_into()
+        //     .context("Failed to convert integer to native size")?;
+        //
+        // if y > ymax {
+        //     self.grid.resize(
+        //         (y + 1).try_into().context(format!(
+        //             "Failed to convert integer {} to native size",
+        //             y + 1
+        //         ))?,
+        //         vec![],
+        //     );
+        // }
+
+        // if x > xmax {
+        //     self.grid[y as usize].resize(
+        //         (x + 1).try_into().context(format!(
+        //             "Failed to convert integer {} to native size",
+        //             x + 1
+        //         ))?,
+        //         32, // the ` ` (space) instruction
+        //     );
+        // }
+
+        self.grid[y as usize][x as usize] = c;
+        Ok(())
     }
 
     /**
@@ -281,9 +312,10 @@ impl Program<i32> {
                     '#' => self.move_cursor(),
                     // A "put" call (a way to store a value for later use).
                     // Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
+                    // Works without bounds
                     'p' => {
                         let (y, x, v) = (self.pop(), self.pop(), self.pop());
-                        self.put_cell((x, y), v);
+                        self.put_cell((x, y), v)?;
                     }
                     // A "get" call (a way to retrieve data in storage).
                     // Pop y and x, then push ASCII value of the character at that position in the program

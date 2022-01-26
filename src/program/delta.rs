@@ -5,7 +5,7 @@ use rand::{
 use std::default::Default;
 use std::ops;
 
-pub struct Delta {
+pub(super) struct Delta {
     pub x: i32,
     pub y: i32,
 }
