@@ -2,8 +2,10 @@ use anyhow::{Context, Error, Result};
 use bstr::ByteSlice;
 use std::{default::Default, fs, path::PathBuf};
 
-use crate::cursor::Cursor;
+use cursor::Cursor;
 
+mod cursor;
+mod delta;
 mod vm;
 
 #[derive(Default)]

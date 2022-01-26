@@ -1,6 +1,6 @@
 use std::default::Default;
 
-use crate::delta::Delta;
+use crate::program::delta::Delta;
 
 #[derive(Default)]
 pub struct Cursor {

@@ -1,4 +1,4 @@
-use crate::delta::Delta;
+use crate::program::delta::Delta;
 
 use super::Program;
 use anyhow::{bail, Context, Result};

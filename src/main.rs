@@ -2,8 +2,6 @@ use anyhow::Result;
 use clap::Parser;
 
 mod args;
-mod cursor;
-mod delta;
 mod program;
 mod repl;
 
