@@ -3,10 +3,10 @@ use std::default::Default;
 use super::{delta::Delta, fungetypes::FungeInteger};
 
 #[derive(Default)]
-pub(super) struct Cursor<T> {
+pub(super) struct Cursor<T: FungeInteger> {
     x: T,
     y: T,
-    delta: Delta,
+    delta: Delta<T>,
 }
 
 impl<T: FungeInteger> Cursor<T> {
@@ -14,11 +14,11 @@ impl<T: FungeInteger> Cursor<T> {
         (self.x, self.y)
     }
 
-    pub fn delta(&self) -> &Delta {
+    pub fn delta(&self) -> &Delta<T> {
         &self.delta
     }
 
-    pub fn set_delta(&mut self, new_delta: Delta) {
+    pub fn set_delta(&mut self, new_delta: Delta<T>) {
         self.delta = new_delta;
     }
 

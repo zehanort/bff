@@ -5,53 +5,75 @@ use rand::{
 use std::default::Default;
 use std::ops;
 
-pub(super) struct Delta {
-    pub x: i32,
-    pub y: i32,
+use super::fungetypes::FungeInteger;
+
+pub(super) struct Delta<T: FungeInteger> {
+    pub x: T,
+    pub y: T,
 }
 
-impl ops::MulAssign<i32> for Delta {
-    fn mul_assign(&mut self, factor: i32) {
-        self.x *= factor;
-        self.y *= factor;
+impl<T: FungeInteger> ops::MulAssign<T> for Delta<T> {
+    fn mul_assign(&mut self, factor: T) {
+        self.x = self.x * factor;
+        self.y = self.y * factor;
     }
 }
 
-impl Delta {
+impl<T: FungeInteger> ops::Add<(T, T)> for Delta<T> {
+    type Output = (T, T);
+
+    fn add(self, rhs: (T, T)) -> Self::Output {
+        (self.x + rhs.0, self.y + rhs.1)
+    }
+}
+
+impl<T: FungeInteger> Delta<T> {
     pub fn east() -> Self {
-        Self { x: 1, y: 0 }
+        Self {
+            x: T::one(),
+            y: T::zero(),
+        }
     }
 
     pub fn south() -> Self {
-        Self { x: 0, y: 1 }
+        Self {
+            x: T::zero(),
+            y: T::one(),
+        }
     }
 
     pub fn west() -> Self {
-        Self { x: -1, y: 0 }
+        Self {
+            x: -T::one(),
+            y: T::zero(),
+        }
     }
 
     pub fn north() -> Self {
-        Self { x: 0, y: -1 }
+        Self {
+            x: T::zero(),
+            y: -T::one(),
+        }
     }
 
     pub fn reflect(&mut self) {
-        *self *= -1;
+        *self *= -T::one();
     }
 }
 
-impl Default for Delta {
+impl<T: FungeInteger> Default for Delta<T> {
     fn default() -> Self {
         Self::east()
     }
 }
 
-impl Distribution<Delta> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Delta {
+impl<T: FungeInteger> Distribution<Delta<T>> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Delta<T> {
         match rng.gen_range(0..=3) {
-            0 => Delta::east(),
-            1 => Delta::south(),
-            2 => Delta::west(),
-            _ => Delta::north(),
+            0 => Delta::<T>::east(),
+            1 => Delta::<T>::south(),
+            2 => Delta::<T>::west(),
+            _ => Delta::<T>::north(),
         }
     }
 }
