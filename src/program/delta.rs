@@ -19,7 +19,7 @@ impl<T: FungeInteger> ops::MulAssign<T> for Delta<T> {
     }
 }
 
-impl<T: FungeInteger> ops::Add<(T, T)> for Delta<T> {
+impl<T: FungeInteger> ops::Add<(T, T)> for &Delta<T> {
     type Output = (T, T);
 
     fn add(self, rhs: (T, T)) -> Self::Output {

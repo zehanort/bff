@@ -32,7 +32,7 @@ impl<T: FungeInteger> Program<T> {
         {
             T::from(32).unwrap() // space
         } else {
-            self.grid[[position.0, position.1]]
+            self.grid[position]
         }
     }
 
@@ -69,7 +69,7 @@ impl<T: FungeInteger> Program<T> {
         //     );
         // }
 
-        self.grid[[x, y]] = c;
+        self.grid[(x, y)] = c;
 
         Ok(())
     }
@@ -445,6 +445,53 @@ impl<T: FungeInteger> Program<T> {
                             k = k + T::one(); // to counter the -= 1 at the end of the while loop
                             xchar = self.peek();
                         }
+                    }
+                    // Clear stack
+                    'n' => self.stack.clear(),
+                    // Compare two values and turn left/right
+                    'w' => {
+                        let (b, a) = (self.pop(), self.pop());
+                        if a < b {
+                            self.cursor.turn_left();
+                        } else if a > b {
+                            self.cursor.turn_right();
+                        }
+                    }
+                    // Fetch character: push ASCII of position + delta onto the stack
+                    // and then jump over it
+                    '\'' => {
+                        self.push(self.get_cell(self.cursor.delta() + position));
+                        self.move_cursor(); // skip c
+                    }
+                    // Store character: pop ASCII value and write it into position + delta
+                    's' => {
+                        let c = self.pop();
+                        let write_pos = self.cursor.delta() + position;
+                        self.grid[write_pos] = c;
+                        self.move_cursor(); // skip c
+                    }
+                    // (Actual) nop
+                    'z' => {}
+                    // Jump n spaces forward/backward
+                    'j' => {
+                        let mut n = self.pop();
+                        let negative = n < T::zero();
+                        if negative {
+                            self.cursor.reflect();
+                        }
+                        n = n.abs();
+                        while n > T::zero() {
+                            self.move_cursor();
+                            n = n - T::one();
+                        }
+                        if negative {
+                            self.cursor.reflect();
+                        }
+                    }
+                    // Set delta to absolute vector value
+                    'x' => {
+                        let (dy, dx) = (self.pop(), self.pop());
+                        self.cursor.set_delta_members((dx, dy));
                     }
                     // Every other character
                     // Note that string mode is OFF here

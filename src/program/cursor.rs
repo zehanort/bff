@@ -22,6 +22,13 @@ impl<T: FungeInteger> Cursor<T> {
         self.delta = new_delta;
     }
 
+    pub fn set_delta_members(&mut self, new_delta: (T, T)) {
+        self.delta = Delta {
+            x: new_delta.0,
+            y: new_delta.1,
+        };
+    }
+
     pub fn set_position(&mut self, x: T, y: T) {
         self.x = x;
         self.y = y;

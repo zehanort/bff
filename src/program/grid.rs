@@ -38,28 +38,28 @@ impl<T: FungeInteger> IndexMut<T> for Grid<T> {
     }
 }
 
-impl<T: FungeInteger> Index<[T; 2]> for Grid<T> {
+impl<T: FungeInteger> Index<(T, T)> for Grid<T> {
     type Output = T;
 
-    fn index(&self, index: [T; 2]) -> &Self::Output {
-        let row = &self[index[1] + self.offset[1]];
-        if index[0] + self.offset[0] >= T::zero() {
-            &row[(index[0] + self.offset[0]).to_usize().unwrap_or_default()]
+    fn index(&self, index: (T, T)) -> &Self::Output {
+        let row = &self[index.1 + self.offset[1]];
+        if index.0 + self.offset[0] >= T::zero() {
+            &row[(index.0 + self.offset[0]).to_usize().unwrap_or_default()]
         } else {
-            &row[(index[0] + self.offset[0]).to_usize().unwrap_or_default()]
+            &row[(index.0 + self.offset[0]).to_usize().unwrap_or_default()]
         }
     }
 }
 
-impl<T: FungeInteger> IndexMut<[T; 2]> for Grid<T> {
-    fn index_mut(&mut self, index: [T; 2]) -> &mut Self::Output {
+impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
+    fn index_mut(&mut self, index: (T, T)) -> &mut Self::Output {
         let offset_x = self.offset[0];
         let offset_y = self.offset[1];
-        let row = &mut self[index[1] + offset_y];
-        if index[0] + offset_x >= T::zero() {
-            &mut row[(index[0] + offset_x).to_usize().unwrap_or_default()]
+        let row = &mut self[index.1 + offset_y];
+        if index.0 + offset_x >= T::zero() {
+            &mut row[(index.0 + offset_x).to_usize().unwrap_or_default()]
         } else {
-            &mut row[(index[0] + offset_x).to_usize().unwrap_or_default()]
+            &mut row[(index.0 + offset_x).to_usize().unwrap_or_default()]
         }
     }
 }
