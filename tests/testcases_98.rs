@@ -59,3 +59,15 @@ fn test_k5() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[ignore = "Negative Funge-Space is not implemented yet"]
+fn test_roundabout() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("roundabout"))
+        .assert()
+        .success()
+        .stdout("OK");
+
+    Ok(())
+}
