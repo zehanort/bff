@@ -61,21 +61,28 @@ impl<T: FungeInteger> Cursor<T> {
     the cursor's `position`.
     */
     pub fn r#move(&mut self, bounds: (T, T)) {
+        macro_rules! out_of_bounds {
+            ($x:expr, $y:expr) => {
+                $x < T::zero() || $x >= bounds.0 || $y < T::zero() || $y >= bounds.1
+            };
+        }
+
         let (x, y) = self.position();
         let delta = self.delta();
         let mut new_x = x + T::from(delta.x).unwrap();
         let mut new_y = y + T::from(delta.y).unwrap();
-        if new_x < T::zero() {
-            new_x = bounds.0 - T::one();
-        }
-        if new_y < T::zero() {
-            new_y = bounds.1 - T::one();
-        }
-        if new_x >= bounds.0 {
-            new_x = T::zero();
-        }
-        if new_y >= bounds.1 {
-            new_y = T::zero();
+        if out_of_bounds!(new_x, new_y) {
+            self.reflect();
+            loop {
+                new_x = new_x + self.delta.x;
+                new_y = new_y + self.delta.y;
+                if out_of_bounds!(new_x, new_y) {
+                    break;
+                }
+            }
+            self.reflect();
+            new_x = new_x + self.delta.x;
+            new_y = new_y + self.delta.y;
         }
         self.set_position(new_x, new_y);
     }
