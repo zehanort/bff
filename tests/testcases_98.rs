@@ -71,3 +71,14 @@ fn test_roundabout() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_non_cardinal() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("non_cardinal"))
+        .assert()
+        .success()
+        .stdout("OK");
+
+    Ok(())
+}
