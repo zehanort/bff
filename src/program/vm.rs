@@ -1,5 +1,4 @@
-use super::delta::Delta;
-use super::Program;
+use super::{delta::Delta, fungetypes::FungeInteger, Program};
 use anyhow::{bail, Context, Result};
 use colour::e_yellow;
 use std::io::{self, Read, Write};
@@ -11,38 +10,34 @@ macro_rules! warning {
     };
 }
 
-impl Program<i32> {
-    /// Helper function that converts an `i32` to a `char`.
-    fn i32_to_char(i: i32) -> char {
-        let c: u8 = i as u8;
-        c as char
-    }
-
+impl<T: FungeInteger> Program<T> {
     /// Pushes `x` into the program stack.
-    fn push(&mut self, x: i32) {
+    fn push(&mut self, x: T) {
         self.stack.push(x);
     }
 
-    /// Pops and returns an `i32` from the program stack.
+    /// Pops and returns a `T` from the program stack.
     /// Note that an empty stack "generates" a 0 when poped, as per the Befunge docs.
-    fn pop(&mut self) -> i32 {
+    fn pop(&mut self) -> T {
         match &self.stack.pop() {
             Some(x) => *x,
-            None => 0,
+            None => T::zero(),
         }
     }
 
-    /// Returns the `i32` on the `position` coordinates of the program grid.
-    fn get_cell(&self, position: (i32, i32)) -> i32 {
-        if position.1 >= self.grid.len() as i32 || position.0 >= self.grid[0].len() as i32 {
-            32 // space
+    /// Returns the `T` on the `position` coordinates of the program grid.
+    fn get_cell(&self, position: (T, T)) -> T {
+        if position.1 >= T::from(self.grid.len()).unwrap_or_default()
+            || position.0 >= T::from(self.grid[T::zero()].len()).unwrap_or_default()
+        {
+            T::from(32).unwrap() // space
         } else {
-            self.grid[position.1 as usize][position.0 as usize]
+            self.grid[[position.0, position.1]]
         }
     }
 
     /// Puts `c` on the `position` coordinates of the program grid.
-    fn put_cell(&mut self, position: (i32, i32), c: i32) -> Result<()> {
+    fn put_cell(&mut self, position: (T, T), c: T) -> Result<()> {
         let (x, y) = position;
         // let ymax = self
         //     .grid
@@ -74,7 +69,8 @@ impl Program<i32> {
         //     );
         // }
 
-        self.grid[y as usize][x as usize] = c;
+        self.grid[[x, y]] = c;
+
         Ok(())
     }
 
@@ -103,14 +99,18 @@ impl Program<i32> {
         let mut current_cell = ' ';
 
         // find next useful instruction
-        while vec![' ', ';'].contains(&current_cell) {
+        while [' ', ';'].contains(&current_cell) {
             // skip `;` blocks
             if current_cell == ';' {
                 loop {
                     self.move_cursor();
                     times_moved += 1;
-                    current_cell = char::from_u32(self.get_cell(self.cursor.position()) as u32)
-                        .unwrap_or_default();
+                    current_cell = char::from_u32(
+                        self.get_cell(self.cursor.position())
+                            .to_u32()
+                            .unwrap_or_default(),
+                    )
+                    .unwrap_or_default();
                     if current_cell == ';' {
                         break;
                     }
@@ -118,8 +118,12 @@ impl Program<i32> {
             }
             self.move_cursor();
             times_moved += 1;
-            current_cell =
-                char::from_u32(self.get_cell(self.cursor.position()) as u32).unwrap_or_default();
+            current_cell = char::from_u32(
+                self.get_cell(self.cursor.position())
+                    .to_u32()
+                    .unwrap_or_default(),
+            )
+            .unwrap_or_default();
         }
 
         // reset cursor
@@ -158,30 +162,30 @@ impl Program<i32> {
         }
 
         let position = self.cursor.position();
-        let mut k = 1;
+        let mut k = T::one();
         let mut program_terminated = false;
 
         let x = self.get_cell(position);
 
         // special case: string mode ON
         if self.string_mode {
-            if x == '"' as i32 {
+            if let Some('"') = char::from_u32(x.to_u32().unwrap_or_default()) {
                 self.toggle_string_mode();
             } else {
-                self.push(x as i32);
+                self.push(x);
             }
-        } else if let Some(mut xchar) = char::from_u32(x as u32) {
-            while k > 0 {
+        } else if let Some(mut xchar) = char::from_u32(x.to_u32().unwrap_or_default()) {
+            while k > T::zero() {
                 match xchar {
                     // Push this decimal number on the stack
                     d if ('0'..='9').contains(&d) => {
                         // these unwraps can't fail; we are sure we have a digit
-                        self.push(d.to_digit(10).unwrap().try_into().unwrap());
+                        self.push(T::from(d.to_digit(10).unwrap()).unwrap());
                     }
                     // Push this hex number on the stack
                     d if ('a'..='f').contains(&d) => {
                         // these unwraps can't fail; we are sure we have a (hex) digit
-                        self.push(d.to_digit(16).unwrap().try_into().unwrap());
+                        self.push(T::from(d.to_digit(16).unwrap()).unwrap());
                     }
                     // Addition: Pop a and b, then push a+b
                     '+' => {
@@ -189,7 +193,7 @@ impl Program<i32> {
                         push_with_overflow_check!(
                             a,
                             overflowing_add,
-                            b,
+                            &b,
                             "An addition resulted in overflow."
                         );
                     }
@@ -199,7 +203,7 @@ impl Program<i32> {
                         push_with_overflow_check!(
                             b,
                             overflowing_sub,
-                            a,
+                            &a,
                             "A subtraction resulted in overflow."
                         );
                     }
@@ -209,7 +213,7 @@ impl Program<i32> {
                         push_with_overflow_check!(
                             a,
                             overflowing_mul,
-                            b,
+                            &b,
                             "A multiplication resulted in overflow."
                         );
                     }
@@ -219,37 +223,32 @@ impl Program<i32> {
                     */
                     '/' => {
                         let (a, b) = (self.pop(), self.pop());
-                        if a == 0 {
+                        if a == T::zero() {
                             warning!("Division by 0 occured. Will return 0 as per the language specification.");
-                            self.push(0);
+                            self.push(T::zero());
                         } else {
-                            push_with_overflow_check!(
-                                b,
-                                overflowing_div,
-                                a,
-                                "A division resulted in overflow."
-                            );
+                            self.push(b / a);
                         }
                     }
                     // Modulo: Pop a and b, then push the remainder of the integer division of b/a.
                     '%' => {
                         let (a, b) = (self.pop(), self.pop());
-                        push_with_overflow_check!(
-                            b,
-                            overflowing_rem,
-                            a,
-                            "A remainder operation resulted in overflow."
-                        );
+                        if a == T::zero() {
+                            warning!("Remainder with divisor of 0 occured. Will return 0 as per the language specification.");
+                            self.push(T::zero());
+                        } else {
+                            self.push(b % a);
+                        }
                     }
                     // Logical NOT: Pop a value. If the value is zero, push 1; otherwise, push zero.
                     '!' => {
                         let a = self.pop();
-                        self.push(if a == 0 { 1 } else { 0 })
+                        self.push(if a == T::zero() { T::one() } else { T::zero() })
                     }
                     // Greater than: Pop a and b, then push 1 if b>a, otherwise zero.
                     '`' => {
                         let (a, b) = (self.pop(), self.pop());
-                        self.push(if b > a { 1 } else { 0 })
+                        self.push(if b > a { T::one() } else { T::zero() })
                     }
                     // Start moving right
                     '>' => self.cursor.set_delta(Delta::east()),
@@ -264,13 +263,16 @@ impl Program<i32> {
                     // Pop a value; move right if value=0, left otherwise
                     '_' => {
                         let a = self.pop();
-                        self.cursor
-                            .set_delta(if a == 0 { Delta::east() } else { Delta::west() })
+                        self.cursor.set_delta(if a == T::zero() {
+                            Delta::east()
+                        } else {
+                            Delta::west()
+                        })
                     }
                     // Pop a value; move down if value=0, up otherwise
                     '|' => {
                         let a = self.pop();
-                        self.cursor.set_delta(if a == 0 {
+                        self.cursor.set_delta(if a == T::zero() {
                             Delta::south()
                         } else {
                             Delta::north()
@@ -303,7 +305,8 @@ impl Program<i32> {
                     }
                     // Pop value and output as ASCII character
                     ',' => {
-                        print!("{}", Program::i32_to_char(self.pop()));
+                        let c = self.pop().to_u32().unwrap_or_default();
+                        print!("{}", char::from_u32(c).unwrap_or_default());
                         io::stdout()
                             .flush()
                             .context("Failed to write a character to stdout")?;
@@ -322,7 +325,7 @@ impl Program<i32> {
                     'g' => {
                         let (y, x) = (self.pop(), self.pop());
                         let c = self.get_cell((x, y));
-                        self.push(c as i32);
+                        self.push(c);
                     }
                     /*
                     Ask user for a number and push it
@@ -338,7 +341,7 @@ impl Program<i32> {
                             .read_line(&mut input_text)
                             .context("Failed while reading raw input from stdin")?;
 
-                        let mut res: i32 = 0;
+                        let mut res: T = T::zero();
                         let mut discard_done = false;
                         let mut negative = 1;
                         for dchar in input_text.trim().chars() {
@@ -346,10 +349,11 @@ impl Program<i32> {
                                 if !discard_done {
                                     discard_done = true;
                                 }
-                                let (shifted_res, mul_overflowed) = res.overflowing_mul(10);
+                                let (shifted_res, mul_overflowed) =
+                                    res.overflowing_mul(&T::from::<i32>(10).unwrap());
                                 // u32 -> i32 is safe here, it is just a single digit
                                 let (new_res, add_overflowed) =
-                                    shifted_res.overflowing_add(d as i32);
+                                    shifted_res.overflowing_add(&T::from::<u32>(d).unwrap());
                                 if mul_overflowed || add_overflowed {
                                     break;
                                 }
@@ -367,8 +371,13 @@ impl Program<i32> {
 
                         // check if negative underflows
                         if negative == -1 {
-                            let (neg_res, underflowed) = res.overflowing_mul(negative);
-                            res = if underflowed { neg_res / 10 } else { neg_res };
+                            let (neg_res, underflowed) =
+                                res.overflowing_mul(&T::from::<i32>(negative).unwrap());
+                            res = if underflowed {
+                                neg_res / T::from::<i32>(10).unwrap()
+                            } else {
+                                neg_res
+                            };
                         }
 
                         self.push(res);
@@ -377,7 +386,7 @@ impl Program<i32> {
                     '~' => {
                         if let Some(b) = std::io::stdin().bytes().next() {
                             let c = b.context("Failed while reading a character from stdin")?;
-                            self.push(c as i32);
+                            self.push(T::from(c).unwrap());
                         } else {
                             bail!("Failed to read character from stdin")
                         }
@@ -393,8 +402,12 @@ impl Program<i32> {
                     // Jump over i.e., execute nothing until next ";"
                     ';' => loop {
                         self.move_cursor();
-                        if char::from_u32(self.get_cell(self.cursor.position()) as u32)
-                            .unwrap_or_default()
+                        if char::from_u32(
+                            self.get_cell(self.cursor.position())
+                                .to_u32()
+                                .unwrap_or_default(),
+                        )
+                        .unwrap_or_default()
                             == ';'
                         {
                             break;
@@ -405,10 +418,10 @@ impl Program<i32> {
                     // can be found here: http://www.rcfunge98.com/tutorial4.html
                     'k' => {
                         k = self.pop();
-                        if k == 0 {
+                        if k == T::zero() {
                             self.move_cursor(); // simply skip next instruction, like `#`
                         } else {
-                            k += 1; // to counter the -= 1 at the end of the while loop
+                            k = k + T::one(); // to counter the -= 1 at the end of the while loop
                             xchar = self.peek();
                         }
                     }
@@ -419,7 +432,7 @@ impl Program<i32> {
                     // (imitating the "r" instruction which will be added later...)
                     _ => self.cursor.reflect(),
                 }
-                k -= 1;
+                k = k - T::one();
             }
         } else {
             self.cursor.reflect()

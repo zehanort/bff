@@ -3,7 +3,7 @@ use std::{io, io::prelude::*};
 
 use crate::program::Program;
 
-pub fn start() -> Result<()> {
+pub fn start(size: i32) -> Result<()> {
     println!("{} - Unefunge 98 REPL", env!("CARGO_PKG_NAME"));
     println!("version {}", env!("CARGO_PKG_VERSION"));
     println!("(type \"exit\" or \"quit\" and press <Enter> or press <Ctrl> + C to quit)");
@@ -35,8 +35,30 @@ pub fn start() -> Result<()> {
         code.push('@');
 
         // step 6: evaluate code
-        let mut program = Program::from(vec![code.into_bytes()]);
-        program.run()?;
+        match size {
+            1 => {
+                let mut program = Program::<i8>::from(vec![code.into_bytes()]);
+                program.run()?;
+            }
+            2 => {
+                let mut program = Program::<i16>::from(vec![code.into_bytes()]);
+                program.run()?;
+            }
+            8 => {
+                let mut program = Program::<i64>::from(vec![code.into_bytes()]);
+                program.run()?;
+            }
+            16 => {
+                let mut program = Program::<i128>::from(vec![code.into_bytes()]);
+                program.run()?;
+            }
+            _ => {
+                // default is i32
+                let mut program = Program::<i32>::from(vec![code.into_bytes()]);
+                program.run()?;
+            }
+        }
+
         println!();
     }
 

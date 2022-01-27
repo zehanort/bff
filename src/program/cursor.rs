@@ -1,16 +1,16 @@
 use std::default::Default;
 
-use super::delta::Delta;
+use super::{delta::Delta, fungetypes::FungeInteger};
 
 #[derive(Default)]
-pub(super) struct Cursor {
-    x: i32,
-    y: i32,
+pub(super) struct Cursor<T> {
+    x: T,
+    y: T,
     delta: Delta,
 }
 
-impl Cursor {
-    pub fn position(&self) -> (i32, i32) {
+impl<T: FungeInteger> Cursor<T> {
+    pub fn position(&self) -> (T, T) {
         (self.x, self.y)
     }
 
@@ -22,7 +22,7 @@ impl Cursor {
         self.delta = new_delta;
     }
 
-    pub fn set_position(&mut self, x: i32, y: i32) {
+    pub fn set_position(&mut self, x: T, y: T) {
         self.x = x;
         self.y = y;
     }
@@ -53,22 +53,22 @@ impl Cursor {
     and takes care of any possible wrap-around, effectively updating
     the cursor's `position`.
     */
-    pub fn r#move(&mut self, bounds: (i32, i32)) {
+    pub fn r#move(&mut self, bounds: (T, T)) {
         let (x, y) = self.position();
         let delta = self.delta();
-        let mut new_x = x + delta.x;
-        let mut new_y = y + delta.y;
-        if new_x < 0 {
-            new_x = bounds.0 - 1;
+        let mut new_x = x + T::from(delta.x).unwrap();
+        let mut new_y = y + T::from(delta.y).unwrap();
+        if new_x < T::zero() {
+            new_x = bounds.0 - T::one();
         }
-        if new_y < 0 {
-            new_y = bounds.1 - 1;
+        if new_y < T::zero() {
+            new_y = bounds.1 - T::one();
         }
         if new_x >= bounds.0 {
-            new_x = 0;
+            new_x = T::zero();
         }
         if new_y >= bounds.1 {
-            new_y = 0;
+            new_y = T::zero();
         }
         self.set_position(new_x, new_y);
     }

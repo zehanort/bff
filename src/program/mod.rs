@@ -3,29 +3,25 @@ use bstr::ByteSlice;
 use std::{default::Default, fs, path::PathBuf};
 
 use cursor::Cursor;
+use fungetypes::FungeInteger;
 use grid::Grid;
 
 mod cursor;
 mod delta;
+pub(super) mod fungetypes;
 mod grid;
 mod vm;
 
 #[derive(Default)]
-pub struct Program<T>
-where
-    T: num::PrimInt + num::Signed + num::ToPrimitive + Default,
-{
+pub struct Program<T: FungeInteger> {
     grid: Grid<T>,
-    cursor: Cursor,
+    cursor: Cursor<T>,
     bounds: (T, T),
     stack: Vec<T>,
     string_mode: bool,
 }
 
-impl<T> From<Vec<Vec<u8>>> for Program<T>
-where
-    T: num::PrimInt + num::Signed + num::ToPrimitive + Default,
-{
+impl<T: FungeInteger> From<Vec<Vec<u8>>> for Program<T> {
     /**
     Constucts a `Program` from a `Vec` of `String`s i.e.,
     the lines of the Befunge source code.
@@ -58,10 +54,7 @@ where
     }
 }
 
-impl<T> TryFrom<PathBuf> for Program<T>
-where
-    T: num::PrimInt + num::Signed + num::ToPrimitive + Default,
-{
+impl<T: FungeInteger> TryFrom<PathBuf> for Program<T> {
     /// Constructs a `Program` from the contents of a Befunge source code file.
     type Error = Error;
 
@@ -83,9 +76,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use anyhow::ensure;
 
     #[test]
-    fn test_all_lines_same_width() {
+    fn test_all_lines_same_width() -> Result<()> {
         let program = Program::<i32>::from(vec![
             b"123".to_vec(),
             b"12345678".to_vec(),
@@ -94,7 +88,9 @@ mod tests {
         ]);
         let width = program.grid[0].len();
         for i in 0..program.grid.len() {
-            assert!(program.grid[i].len() == width);
+            ensure!(program.grid[i as i32].len() == width);
         }
+
+        Ok(())
     }
 }
