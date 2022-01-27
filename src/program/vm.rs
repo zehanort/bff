@@ -371,10 +371,10 @@ impl<T: FungeInteger> Program<T> {
                                     discard_done = true;
                                 }
                                 let (shifted_res, mul_overflowed) =
-                                    res.overflowing_mul(&T::from::<i32>(10).unwrap());
+                                    res.overflowing_mul(&T::from(10).unwrap());
                                 // u32 -> i32 is safe here, it is just a single digit
                                 let (new_res, add_overflowed) =
-                                    shifted_res.overflowing_add(&T::from::<u32>(d).unwrap());
+                                    shifted_res.overflowing_add(&T::from(d).unwrap());
                                 if mul_overflowed || add_overflowed {
                                     break;
                                 }
@@ -393,9 +393,9 @@ impl<T: FungeInteger> Program<T> {
                         // check if negative underflows
                         if negative == -1 {
                             let (neg_res, underflowed) =
-                                res.overflowing_mul(&T::from::<i32>(negative).unwrap());
+                                res.overflowing_mul(&T::from(negative).unwrap());
                             res = if underflowed {
-                                neg_res / T::from::<i32>(10).unwrap()
+                                neg_res / T::from(10).unwrap()
                             } else {
                                 neg_res
                             };

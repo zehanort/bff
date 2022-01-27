@@ -69,8 +69,8 @@ impl<T: FungeInteger> Cursor<T> {
 
         let (x, y) = self.position();
         let delta = self.delta();
-        let mut new_x = x + T::from(delta.x).unwrap();
-        let mut new_y = y + T::from(delta.y).unwrap();
+        let mut new_x = x + delta.x;
+        let mut new_y = y + delta.y;
         if out_of_bounds!(new_x, new_y) {
             self.reflect();
             loop {
