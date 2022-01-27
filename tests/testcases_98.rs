@@ -10,6 +10,17 @@ fn testcase(name: &str) -> String {
 }
 
 #[test]
+fn test_hello_world() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("hello_world"))
+        .assert()
+        .success()
+        .stdout("Hello world!");
+
+    Ok(())
+}
+
+#[test]
 fn test_k1() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
     cmd.arg(testcase("k1")).assert().success().stdout("0 ");

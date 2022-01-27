@@ -136,6 +136,22 @@ impl<T: FungeInteger> Program<T> {
         current_cell
     }
 
+    /// Skips all consecutive spaces by moving the `cursor` appropriately.
+    fn skip_spaces(&mut self) {
+        loop {
+            self.move_cursor();
+            let new_x = self.get_cell(self.cursor.position());
+            if char::from_u32(new_x.to_u32().unwrap_or_default()).unwrap_or_default() != ' ' {
+                // get cursor one space back
+                // because it will move again at the end of the method
+                self.cursor.reflect();
+                self.move_cursor();
+                self.cursor.reflect();
+                break;
+            }
+        }
+    }
+
     /*
     INSTRUCTION SET IMPLEMENTATIONS
     One method for each instruction follows
@@ -169,10 +185,15 @@ impl<T: FungeInteger> Program<T> {
 
         // special case: string mode ON
         if self.string_mode {
-            if let Some('"') = char::from_u32(x.to_u32().unwrap_or_default()) {
-                self.toggle_string_mode();
-            } else {
-                self.push(x);
+            match char::from_u32(x.to_u32().unwrap_or_default()) {
+                Some('"') => {
+                    self.toggle_string_mode();
+                }
+                Some(' ') => {
+                    self.push(x);
+                    self.skip_spaces();
+                }
+                _ => self.push(x),
             }
         } else if let Some(mut xchar) = char::from_u32(x.to_u32().unwrap_or_default()) {
             while k > T::zero() {
@@ -393,8 +414,8 @@ impl<T: FungeInteger> Program<T> {
                     }
                     // End program
                     '@' => program_terminated = true,
-                    // No-op. Does nothing
-                    ' ' => {}
+                    // No-op. Do nothing and skip all consecutive spaces
+                    ' ' => self.skip_spaces(),
                     // Turn left
                     '[' => self.cursor.turn_left(),
                     // Turn right
