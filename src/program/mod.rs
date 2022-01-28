@@ -6,19 +6,21 @@ use bounds::Bounds;
 use cursor::Cursor;
 use fungetypes::FungeInteger;
 use grid::Grid;
+use sstack::SStack;
 
 mod bounds;
 mod cursor;
 mod delta;
 pub(super) mod fungetypes;
 mod grid;
+mod sstack;
 mod vm;
 
 #[derive(Default)]
 pub struct Program<T: FungeInteger> {
     grid: Grid<T>,
     cursor: Cursor<T>,
-    stack: Vec<T>,
+    sstack: SStack<T>,
     string_mode: bool,
 }
 

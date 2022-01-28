@@ -13,18 +13,19 @@ macro_rules! warning {
 impl<T: FungeInteger> Program<T> {
     /// Pushes `x` into the program stack.
     fn push(&mut self, x: T) {
-        self.stack.push(x);
+        self.sstack.push_onto_toss(x);
     }
 
     /**
     Pops and returns a `T` from the program stack.
-    Note that an empty stack "generates" a 0 when poped, as per the Befunge docs.
     */
     fn pop(&mut self) -> T {
-        match &self.stack.pop() {
-            Some(x) => *x,
-            None => T::zero(),
-        }
+        self.sstack.pop_from_toss()
+    }
+
+    /// A wrapper around the `clear_toss` method of the `sstack` struct.
+    fn clear_toss(&mut self) {
+        self.sstack.clear_toss();
     }
 
     /**
@@ -287,7 +288,7 @@ impl<T: FungeInteger> Program<T> {
                     }
                     // Pop value from the stack and discard it
                     '$' => {
-                        self.stack.pop();
+                        self.pop();
                     }
                     // Pop value and output as an integer followed by a space
                     '.' => {
@@ -419,7 +420,7 @@ impl<T: FungeInteger> Program<T> {
                         }
                     }
                     // Clear stack
-                    'n' => self.stack.clear(),
+                    'n' => self.clear_toss(),
                     // Compare two values and turn left/right
                     'w' => {
                         let (b, a) = (self.pop(), self.pop());
@@ -465,6 +466,10 @@ impl<T: FungeInteger> Program<T> {
                         let (dy, dx) = (self.pop(), self.pop());
                         self.cursor.set_delta_members((dx, dy));
                     }
+                    // Begin block; see specification for details
+                    // '{' => {
+                    //     let n = self.pop();
+                    // }
                     // Every other character
                     // Note that string mode is OFF here
                     // (we checked the "ON" case before the match statement)
