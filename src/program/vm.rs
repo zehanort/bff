@@ -451,10 +451,10 @@ impl<T: FungeInteger> Program<T> {
                     // Compare two values and turn left/right
                     'w' => {
                         let (b, a) = (self.pop(), self.pop());
-                        if a < b {
-                            self.cursor.turn_left();
-                        } else if a > b {
-                            self.cursor.turn_right();
+                        match a.cmp(&b) {
+                            std::cmp::Ordering::Less => self.cursor.turn_left(),
+                            std::cmp::Ordering::Greater => self.cursor.turn_right(),
+                            std::cmp::Ordering::Equal => {}
                         }
                     }
                     // Fetch character: push ASCII of position + delta onto the stack
