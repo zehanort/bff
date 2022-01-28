@@ -17,13 +17,4 @@ pub struct Args {
         help = "Run the Unefunge 98 program provided in the command line"
     )]
     pub ucode: Option<String>,
-    #[clap(
-        name = "type size",
-        short = 's',
-        long = "size",
-        possible_values = ["1", "2", "4", "8", "16"],
-        default_value = "4",
-        help = "Size in bytes of integer type to be used"
-    )]
-    pub size: i32,
 }
