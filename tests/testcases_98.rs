@@ -61,10 +61,9 @@ fn test_k5() -> Result<()> {
 }
 
 #[test]
-#[ignore = "Negative Funge-Space is not implemented yet"]
-fn test_roundabout() -> Result<()> {
+fn test_non_cardinal() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    cmd.arg(testcase("roundabout"))
+    cmd.arg(testcase("non_cardinal"))
         .assert()
         .success()
         .stdout("OK");
@@ -73,11 +72,56 @@ fn test_roundabout() -> Result<()> {
 }
 
 #[test]
-fn test_non_cardinal() -> Result<()> {
+fn test_pg_out() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    cmd.arg(testcase("non_cardinal"))
+    cmd.arg(testcase("pg_out")).assert().success();
+
+    Ok(())
+}
+
+#[test]
+fn test_roundabout() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("roundabout"))
         .assert()
         .success()
+        .stderr("")
+        .stdout("OK");
+
+    Ok(())
+}
+
+#[test]
+fn test_roundabout_reverse() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("roundabout_reverse"))
+        .assert()
+        .success()
+        .stderr("")
+        .stdout("OK");
+
+    Ok(())
+}
+
+#[test]
+fn test_roundabout_diag_first() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("roundabout_diag_first"))
+        .assert()
+        .success()
+        .stderr("")
+        .stdout("OK");
+
+    Ok(())
+}
+
+#[test]
+fn test_diagonal_negspace() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("diagonal_negspace"))
+        .assert()
+        .success()
+        .stderr("")
         .stdout("OK");
 
     Ok(())

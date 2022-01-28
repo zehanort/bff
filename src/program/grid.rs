@@ -1,17 +1,19 @@
-use super::fungetypes::FungeInteger;
+use super::{bounds::Bounds, fungetypes::FungeInteger};
 use std::ops::{Index, IndexMut};
 
 #[derive(Default)]
 pub(super) struct Grid<T: FungeInteger> {
     grid: Vec<Vec<T>>,
-    offset: [T; 2],
+    bounds: Bounds<T>,
+    neg_offset: [T; 2],
 }
 
-impl<T: FungeInteger> From<Vec<Vec<T>>> for Grid<T> {
-    fn from(grid: Vec<Vec<T>>) -> Self {
+impl<T: FungeInteger> From<(Vec<Vec<T>>, Bounds<T>)> for Grid<T> {
+    fn from((grid, bounds): (Vec<Vec<T>>, Bounds<T>)) -> Self {
         Self {
             grid,
-            offset: [T::zero(), T::zero()],
+            bounds,
+            neg_offset: [T::zero(), T::zero()],
         }
     }
 }
@@ -20,21 +22,35 @@ impl<T: FungeInteger> Index<T> for Grid<T> {
     type Output = Vec<T>;
 
     fn index(&self, index: T) -> &Self::Output {
-        if index + self.offset[1] >= T::zero() {
-            &self.grid[(index + self.offset[1]).to_usize().unwrap_or_default()]
-        } else {
-            &self.grid[(index + self.offset[1]).to_usize().unwrap_or_default()]
-        }
+        let y = index - self.neg_offset[1];
+        // if this panics, something is broken in the logic:
+        // Execution should NEVER reach here if y < 0
+        &self.grid[y.to_usize().unwrap()]
     }
 }
 
+// Resizes Funge-Space if necessary
 impl<T: FungeInteger> IndexMut<T> for Grid<T> {
     fn index_mut(&mut self, index: T) -> &mut Self::Output {
-        if index + self.offset[1] >= T::zero() {
-            &mut self.grid[(index + self.offset[1]).to_usize().unwrap_or_default()]
+        let i_t = index - self.neg_offset[1];
+        let i = i_t.to_usize().unwrap_or_default();
+        if i_t >= T::zero() {
+            if i_t >= self.bounds.upper_y() {
+                // need to resize height to the positive
+                self.grid
+                    .resize(i + 1, vec![T::from(32).unwrap(); self.grid[0].len()]);
+                self.bounds.set_upper_y(index + T::one());
+            }
         } else {
-            &mut self.grid[(index + self.offset[1]).to_usize().unwrap_or_default()]
+            // need to resize height to the negative
+            let neg_len = i_t.abs().to_usize().unwrap_or_default();
+            let mut neg_expansion = vec![vec![T::from(32).unwrap(); self.grid[0].len()]; neg_len];
+            neg_expansion.append(&mut self.grid);
+            self.grid = neg_expansion;
+            self.neg_offset[1] = i_t;
+            self.bounds.set_lower_y(i_t);
         }
+        &mut self.grid[(index - self.neg_offset[1]).to_usize().unwrap()]
     }
 }
 
@@ -42,31 +58,72 @@ impl<T: FungeInteger> Index<(T, T)> for Grid<T> {
     type Output = T;
 
     fn index(&self, index: (T, T)) -> &Self::Output {
-        let row = &self[index.1 + self.offset[1]];
-        if index.0 + self.offset[0] >= T::zero() {
-            &row[(index.0 + self.offset[0]).to_usize().unwrap_or_default()]
-        } else {
-            &row[(index.0 + self.offset[0]).to_usize().unwrap_or_default()]
-        }
+        let x = index.0 - self.neg_offset[0];
+        // if this panics, something is broken in the logic:
+        // Execution should NEVER reach here if x < 0
+        &self[index.1][x.to_usize().unwrap()]
     }
 }
 
+// Resizes Funge-Space if necessary
 impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
     fn index_mut(&mut self, index: (T, T)) -> &mut Self::Output {
-        let offset_x = self.offset[0];
-        let offset_y = self.offset[1];
-        let row = &mut self[index.1 + offset_y];
-        if index.0 + offset_x >= T::zero() {
-            &mut row[(index.0 + offset_x).to_usize().unwrap_or_default()]
+        let neg_offset_x = self.neg_offset[0];
+        let x_t = index.0 - neg_offset_x;
+        let x = x_t.to_usize().unwrap_or_default();
+        if x_t >= T::zero() {
+            if x_t >= self.bounds.upper_x() {
+                // need to resize width OF ALL ROWS to the positive
+                for idx in 0..self.grid.len() {
+                    self.grid[idx].resize(x + 1, T::from(32).unwrap());
+                }
+                self.bounds.set_upper_x(index.0 + T::one());
+            }
         } else {
-            &mut row[(index.0 + offset_x).to_usize().unwrap_or_default()]
+            // need to resize width OF ALL ROWS to the negative
+            let neg_len = x_t.abs().to_usize().unwrap_or_default();
+            for idx in 0..self.grid.len() {
+                let mut neg_expansion = vec![T::from(32).unwrap(); neg_len];
+                neg_expansion.append(&mut self.grid[idx]);
+                self.grid[idx] = neg_expansion;
+            }
+            self.neg_offset[0] = x_t;
+            self.bounds.set_lower_x(x_t);
         }
+        let new_x_t = index.0 - self.neg_offset[0];
+        &mut self[index.1][new_x_t.to_usize().unwrap()]
     }
 }
 
 impl<T: FungeInteger> Grid<T> {
+    pub fn get_bounds(&self) -> &Bounds<T> {
+        &self.bounds
+    }
+
+    /// Wraps the `out_of_bounds` method of the `bounds` struct.
+    pub fn out_of_bounds(&self, (x, y): (T, T)) -> bool {
+        self.bounds.out_of_bounds((x, y))
+    }
+
+    #[cfg(test)]
     /// Returns the number of rows of the Befunge program
     pub fn len(&self) -> usize {
         self.grid.len()
+    }
+}
+
+impl<T: FungeInteger> std::fmt::Debug for Grid<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for i in 0..self.grid.len() {
+            writeln!(
+                f,
+                "{}",
+                self.grid[i]
+                    .iter()
+                    .map(|b| { char::from_u32(b.to_u32().unwrap_or_default()).unwrap_or_default() })
+                    .collect::<String>()
+            )?;
+        }
+        Ok(())
     }
 }

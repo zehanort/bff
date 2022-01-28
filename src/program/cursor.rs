@@ -1,6 +1,6 @@
 use std::default::Default;
 
-use super::{delta::Delta, fungetypes::FungeInteger};
+use super::{bounds::Bounds, delta::Delta, fungetypes::FungeInteger};
 
 #[derive(Default)]
 pub(super) struct Cursor<T: FungeInteger> {
@@ -60,23 +60,17 @@ impl<T: FungeInteger> Cursor<T> {
     and takes care of any possible wrap-around, effectively updating
     the cursor's `position`.
     */
-    pub fn r#move(&mut self, bounds: (T, T)) {
-        macro_rules! out_of_bounds {
-            ($x:expr, $y:expr) => {
-                $x < T::zero() || $x >= bounds.0 || $y < T::zero() || $y >= bounds.1
-            };
-        }
-
+    pub fn r#move(&mut self, bounds: &Bounds<T>) {
         let (x, y) = self.position();
         let delta = self.delta();
         let mut new_x = x + delta.x;
         let mut new_y = y + delta.y;
-        if out_of_bounds!(new_x, new_y) {
+        if bounds.out_of_bounds((new_x, new_y)) {
             self.reflect();
             loop {
                 new_x = new_x + self.delta.x;
                 new_y = new_y + self.delta.y;
-                if out_of_bounds!(new_x, new_y) {
+                if bounds.out_of_bounds((new_x, new_y)) {
                     break;
                 }
             }

@@ -2,10 +2,12 @@ use anyhow::{Context, Error, Result};
 use bstr::ByteSlice;
 use std::{default::Default, fs, path::PathBuf};
 
+use bounds::Bounds;
 use cursor::Cursor;
 use fungetypes::FungeInteger;
 use grid::Grid;
 
+mod bounds;
 mod cursor;
 mod delta;
 pub(super) mod fungetypes;
@@ -16,7 +18,6 @@ mod vm;
 pub struct Program<T: FungeInteger> {
     grid: Grid<T>,
     cursor: Cursor<T>,
-    bounds: (T, T),
     stack: Vec<T>,
     string_mode: bool,
 }
@@ -36,19 +37,26 @@ impl<T: FungeInteger> From<Vec<Vec<u8>>> for Program<T> {
             line.resize(width, 32);
         }
 
-        let grid = Grid::from(
-            code.iter()
-                .map(|line| {
-                    line.iter()
-                        .map(|b| T::from(*b).unwrap_or_default())
-                        .collect()
-                })
-                .collect::<Vec<Vec<T>>>(),
+        let source = code
+            .iter()
+            .map(|line| {
+                line.iter()
+                    .map(|b| T::from(*b).unwrap_or_default())
+                    .collect()
+            })
+            .collect::<Vec<Vec<T>>>();
+
+        let bounds = Bounds::new(
+            T::zero(),
+            T::zero(),
+            T::from(width).unwrap_or_default(),
+            height,
         );
+
+        let grid = Grid::from((source, bounds));
 
         Self {
             grid,
-            bounds: (T::from(width).unwrap_or_default(), height),
             ..Default::default()
         }
     }

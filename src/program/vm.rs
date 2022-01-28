@@ -16,8 +16,10 @@ impl<T: FungeInteger> Program<T> {
         self.stack.push(x);
     }
 
-    /// Pops and returns a `T` from the program stack.
-    /// Note that an empty stack "generates" a 0 when poped, as per the Befunge docs.
+    /**
+    Pops and returns a `T` from the program stack.
+    Note that an empty stack "generates" a 0 when poped, as per the Befunge docs.
+    */
     fn pop(&mut self) -> T {
         match &self.stack.pop() {
             Some(x) => *x,
@@ -25,53 +27,28 @@ impl<T: FungeInteger> Program<T> {
         }
     }
 
-    /// Returns the `T` on the `position` coordinates of the program grid.
+    /**
+    Returns the `T` on the `position` coordinates of the program grid.
+
+    If `position` is out of bounds, returns ` ` (space), without annoying
+    the underlying `grid` struct.
+    */
     fn get_cell(&self, position: (T, T)) -> T {
-        if position.1 >= T::from(self.grid.len()).unwrap_or_default()
-            || position.0 >= T::from(self.grid[T::zero()].len()).unwrap_or_default()
-        {
+        if self.grid.out_of_bounds(position) {
             T::from(32).unwrap() // space
         } else {
             self.grid[position]
         }
     }
 
-    /// Puts `c` on the `position` coordinates of the program grid.
-    fn put_cell(&mut self, position: (T, T), c: T) -> Result<()> {
-        let (x, y) = position;
-        // let ymax = self
-        //     .grid
-        //     .len()
-        //     .try_into()
-        //     .context(format!("Failed to convert integer {} to native size", x))?;
-        // let xmax = self.grid[0]
-        //     .len()
-        //     .try_into()
-        //     .context("Failed to convert integer to native size")?;
-        //
-        // if y > ymax {
-        //     self.grid.resize(
-        //         (y + 1).try_into().context(format!(
-        //             "Failed to convert integer {} to native size",
-        //             y + 1
-        //         ))?,
-        //         vec![],
-        //     );
-        // }
+    /**
+    Puts `c` on the `position` coordinates of the program grid.
 
-        // if x > xmax {
-        //     self.grid[y as usize].resize(
-        //         (x + 1).try_into().context(format!(
-        //             "Failed to convert integer {} to native size",
-        //             x + 1
-        //         ))?,
-        //         32, // the ` ` (space) instruction
-        //     );
-        // }
-
-        self.grid[(x, y)] = c;
-
-        Ok(())
+    The underlying `grid` struct will resize the Funge-Space in case
+    `position` is out of bounds.
+    */
+    fn put_cell(&mut self, position: (T, T), c: T) {
+        self.grid[position] = c;
     }
 
     /**
@@ -86,7 +63,7 @@ impl<T: FungeInteger> Program<T> {
     A wrapper around the `move` method of the cursor object.
     */
     fn move_cursor(&mut self) {
-        self.cursor.r#move(self.bounds);
+        self.cursor.r#move(self.grid.get_bounds());
     }
 
     /**
@@ -151,11 +128,6 @@ impl<T: FungeInteger> Program<T> {
             }
         }
     }
-
-    /*
-    INSTRUCTION SET IMPLEMENTATIONS
-    One method for each instruction follows
-    */
 
     /**
     Executes the cell on which the `cursor` lies.
@@ -339,7 +311,7 @@ impl<T: FungeInteger> Program<T> {
                     // Works without bounds
                     'p' => {
                         let (y, x, v) = (self.pop(), self.pop(), self.pop());
-                        self.put_cell((x, y), v)?;
+                        self.put_cell((x, y), v);
                     }
                     // A "get" call (a way to retrieve data in storage).
                     // Pop y and x, then push ASCII value of the character at that position in the program
@@ -467,7 +439,7 @@ impl<T: FungeInteger> Program<T> {
                     's' => {
                         let c = self.pop();
                         let write_pos = self.cursor.delta() + position;
-                        self.grid[write_pos] = c;
+                        self.put_cell(write_pos, c);
                         self.move_cursor(); // skip c
                     }
                     // (Actual) nop
