@@ -7,6 +7,7 @@ pub(super) struct Cursor<T: FungeInteger> {
     x: T,
     y: T,
     delta: Delta<T>,
+    storage_offset: (T, T),
 }
 
 impl<T: FungeInteger> Cursor<T> {
@@ -16,6 +17,15 @@ impl<T: FungeInteger> Cursor<T> {
 
     pub fn delta(&self) -> &Delta<T> {
         &self.delta
+    }
+
+    pub fn storage_offset(&self) -> (T, T) {
+        self.storage_offset
+    }
+
+    pub fn set_position(&mut self, x: T, y: T) {
+        self.x = x;
+        self.y = y;
     }
 
     pub fn set_delta(&mut self, new_delta: Delta<T>) {
@@ -29,9 +39,8 @@ impl<T: FungeInteger> Cursor<T> {
         };
     }
 
-    pub fn set_position(&mut self, x: T, y: T) {
-        self.x = x;
-        self.y = y;
+    pub fn set_storage_offset(&mut self, so: (T, T)) {
+        self.storage_offset = so;
     }
 
     /// Reflects delta to point to "the opposite way".
@@ -53,6 +62,14 @@ impl<T: FungeInteger> Cursor<T> {
         let y = self.delta.y;
         self.delta.x = -y;
         self.delta.y = x;
+    }
+
+    /// Returns the `position` relative to this cursor's `storage offset`.
+    pub fn translate_to_storage_position(&self, position: (T, T)) -> (T, T) {
+        (
+            position.0 + self.storage_offset.0,
+            position.1 + self.storage_offset.1,
+        )
     }
 
     /**

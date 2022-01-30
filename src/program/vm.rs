@@ -308,17 +308,17 @@ impl<T: FungeInteger> Program<T> {
                     // Bridge: Skip next cell
                     '#' => self.move_cursor(),
                     // A "put" call (a way to store a value for later use).
-                    // Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
-                    // Works without bounds
+                    // Pop y, x, and v, then change the character at position ((x,y) + storage offset) in the program
+                    // to the character with ASCII value v
                     'p' => {
                         let (y, x, v) = (self.pop(), self.pop(), self.pop());
-                        self.put_cell((x, y), v);
+                        self.put_cell(self.cursor.translate_to_storage_position((x, y)), v);
                     }
                     // A "get" call (a way to retrieve data in storage).
-                    // Pop y and x, then push ASCII value of the character at that position in the program
+                    // Pop y and x, then push ASCII value of the character at the position (position + storage offset) in the program
                     'g' => {
                         let (y, x) = (self.pop(), self.pop());
-                        let c = self.get_cell((x, y));
+                        let c = self.get_cell(self.cursor.translate_to_storage_position((x, y)));
                         self.push(c);
                     }
                     /*
@@ -467,8 +467,25 @@ impl<T: FungeInteger> Program<T> {
                         self.cursor.set_delta_members((dx, dy));
                     }
                     // Begin block; see specification for details
-                    // '{' => {
-                    //     let n = self.pop();
+                    '{' => {
+                        let n = self.pop();
+                        self.sstack.create_stack(n, self.cursor.storage_offset());
+                        // update storage offset
+                        self.cursor
+                            .set_storage_offset(self.cursor.delta() + self.cursor.position());
+                    }
+                    // End block; see specification or the `end_block` method for details
+                    '}' => {
+                        let n = self.pop();
+                        match self.sstack.destroy_stack(n) {
+                            Some(so) => self.cursor.set_storage_offset(so),
+                            None => self.cursor.reflect(),
+                        }
+                    }
+                    // Stack under stack; transfer between TOSS and SOSS
+                    // 'u' => {
+                    //     let count = self.pop();
+                    //     self.sstack.transfer(count);
                     // }
                     // Every other character
                     // Note that string mode is OFF here
