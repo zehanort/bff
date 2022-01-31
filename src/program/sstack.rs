@@ -2,7 +2,7 @@ use super::fungetypes::FungeInteger;
 
 #[derive(Default)]
 pub(super) struct SStack<T> {
-    pub stacks: Vec<Vec<T>>,
+    stacks: Vec<Vec<T>>,
 }
 
 impl<T: FungeInteger> SStack<T> {
@@ -27,13 +27,6 @@ impl<T: FungeInteger> SStack<T> {
         }
     }
 
-    /// Returns the length of the TOSS.
-    fn get_toss_len(&self) -> usize {
-        match self.stacks.last() {
-            Some(toss) => toss.len(),
-            None => 0,
-        }
-    }
     /// Clears the TOSS, leaving it empty.
     pub fn clear_toss(&mut self) {
         self.get_toss().clear();
@@ -118,28 +111,33 @@ impl<T: FungeInteger> SStack<T> {
         }
     }
 
-    // pub fn transfer(&mut self, count: T) -> Option<()> {
-    //     if self.stacks.len() == 1 {
-    //         None
-    //     } else {
-    //         let to = if count >= T::zero() {
-    //             self.get_soss()?
-    //         } else {
-    //             self.get_toss()
-    //         };
-    //         let from = if count >= T::zero() {
-    //             self.get_toss()
-    //         } else {
-    //             self.get_soss()?
-    //         };
-    //         for _ in 0..count.abs().to_usize().unwrap() {
-    //             let x = match from.pop() {
-    //                 Some(val) => val,
-    //                 None => T::zero(),
-    //             };
-    //             to.push(x);
-    //         }
-    //         Some(())
-    //     }
-    // }
+    pub fn transfer(&mut self, count: T) -> Option<()> {
+        if self.stacks.len() == 1 {
+            None
+        } else {
+            let from = if count > T::zero() {
+                self.get_soss()?
+            } else {
+                self.get_toss()
+            };
+            let n = count.abs().to_usize().unwrap_or_default();
+            if n > 0 {
+                let mut popped = vec![];
+                for _ in 0..n {
+                    let x = match from.pop() {
+                        Some(val) => val,
+                        None => T::zero(),
+                    };
+                    popped.push(x);
+                }
+                let to = if count > T::zero() {
+                    self.get_toss()
+                } else {
+                    self.get_soss()?
+                };
+                to.append(&mut popped);
+            }
+            Some(())
+        }
+    }
 }

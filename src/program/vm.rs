@@ -483,10 +483,12 @@ impl<T: FungeInteger> Program<T> {
                         }
                     }
                     // Stack under stack; transfer between TOSS and SOSS
-                    // 'u' => {
-                    //     let count = self.pop();
-                    //     self.sstack.transfer(count);
-                    // }
+                    'u' => {
+                        let count = self.pop();
+                        if self.sstack.transfer(count).is_none() {
+                            self.cursor.reflect();
+                        }
+                    }
                     // Every other character
                     // Note that string mode is OFF here
                     // (we checked the "ON" case before the match statement)
