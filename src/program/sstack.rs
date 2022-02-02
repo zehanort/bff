@@ -131,4 +131,8 @@ impl<T: FungeInteger> SStack<T> {
             Some(())
         }
     }
+
+    pub fn get_stacks(&self) -> &Vec<Vec<T>> {
+        &self.stacks
+    }
 }

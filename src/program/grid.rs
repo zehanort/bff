@@ -105,6 +105,48 @@ impl<T: FungeInteger> Grid<T> {
         self.bounds.out_of_bounds((x, y))
     }
 
+    /**
+    Returns 1 vector containing the least point
+    which contains a non-space cell, relative to the origin
+    */
+    pub fn get_least_point(&self) -> Vec<T> {
+        for (y, line) in self.grid.iter().enumerate() {
+            for (x, c) in line.iter().enumerate() {
+                if *c != T::from(32).unwrap_or_default() {
+                    return vec![
+                        self.neg_offset[0] + T::from(x).unwrap_or_default(),
+                        self.neg_offset[1] + T::from(y).unwrap_or_default(),
+                    ];
+                }
+            }
+        }
+        // fallback, should never happen
+        vec![self.neg_offset[0], self.neg_offset[1]]
+    }
+
+    /**
+    Returns 1 vector containing the greatest point
+    which contains a non-space cell, relative to the least point
+    */
+    pub fn get_greatest_point(&self) -> Vec<T> {
+        let least_point = self.get_least_point();
+        for (y, line) in self.grid.iter().enumerate().rev() {
+            for (x, c) in line.iter().enumerate().rev() {
+                if *c != T::from(32).unwrap_or_default() {
+                    return vec![
+                        T::from(x).unwrap_or_default() - least_point[0],
+                        T::from(y).unwrap_or_default() - least_point[1],
+                    ];
+                }
+            }
+        }
+        // fallback, should never happen
+        vec![
+            T::from(self.grid.last().unwrap_or(&vec![]).len()).unwrap_or_default() - least_point[0],
+            T::from(self.grid.len()).unwrap_or_default() - least_point[1],
+        ]
+    }
+
     #[cfg(test)]
     /// Returns the number of rows of the Befunge program
     pub fn len(&self) -> usize {

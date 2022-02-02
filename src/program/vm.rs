@@ -1,4 +1,4 @@
-use super::{delta::Delta, fungetypes::FungeInteger, Program};
+use super::{delta::Delta, fungetypes::FungeInteger, sysinfo::SystemInfoReporter, Program};
 use anyhow::{bail, Context, Result};
 use colour::e_yellow;
 use std::io::{self, Read, Write};
@@ -487,6 +487,13 @@ impl<T: FungeInteger> Program<T> {
                         let count = self.pop();
                         if self.sstack.transfer(count).is_none() {
                             self.cursor.reflect();
+                        }
+                    }
+                    'y' => {
+                        let query = self.pop();
+                        let report = self.get_full_report();
+                        for cell in report {
+                            self.push(cell);
                         }
                     }
                     // Every other character

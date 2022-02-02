@@ -14,6 +14,7 @@ mod delta;
 pub(super) mod fungetypes;
 mod grid;
 mod sstack;
+mod sysinfo;
 mod vm;
 
 #[derive(Default)]
