@@ -135,4 +135,15 @@ impl<T: FungeInteger> SStack<T> {
     pub fn get_stacks(&self) -> &Vec<Vec<T>> {
         &self.stacks
     }
+
+    /// Returns the `n`th element of the TOSS,
+    /// counting from the top (the topmost element has index 0).
+    pub fn get(&mut self, n: usize) -> T {
+        let toss_len = self.get_toss().len();
+        if n >= toss_len {
+            T::zero()
+        } else {
+            self.get_toss()[toss_len - n - 1]
+        }
+    }
 }

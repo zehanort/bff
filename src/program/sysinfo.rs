@@ -148,30 +148,27 @@ impl<T: FungeInteger> SystemInfoReporter<T> for Program<T> {
     fn get_cli_args() -> Vec<T> {
         let mut res = vec![];
         // TODO: replace for loop with map
-        for arg in env::args().next() {
+        for arg in env::args().skip(1) {
             let mut arg_str: Vec<T> = arg
                 .bytes()
                 .map(|b| T::from(b).unwrap_or_default())
-                .rev()
                 .collect();
             arg_str.push(T::zero());
             res.append(&mut arg_str);
         }
         res.push(T::zero());
         res.push(T::zero());
-        res
+        res.into_iter().rev().collect()
     }
 
     // 20
     fn get_env_vars() -> Vec<T> {
         let mut res = vec![];
         for (key, value) in env::vars() {
-            let mut env_var = vec![];
             res.append(
                 &mut key
                     .bytes()
                     .map(|b| T::from(b).unwrap_or_default())
-                    .rev()
                     .collect(),
             );
             res.push(T::from(61).unwrap_or_default()); // 61 is ASCII '='
@@ -179,14 +176,12 @@ impl<T: FungeInteger> SystemInfoReporter<T> for Program<T> {
                 &mut value
                     .bytes()
                     .map(|b| T::from(b).unwrap_or_default())
-                    .rev()
                     .collect(),
             );
-            env_var.push(T::zero());
-            res.append(&mut env_var);
+            res.push(T::zero());
         }
         res.push(T::zero());
-        res
+        res.into_iter().rev().collect()
     }
 
     fn get_full_report(&self) -> Vec<T> {

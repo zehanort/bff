@@ -492,8 +492,22 @@ impl<T: FungeInteger> Program<T> {
                     'y' => {
                         let query = self.pop();
                         let report = self.get_full_report();
-                        for cell in report {
-                            self.push(cell);
+                        let report_length = report.len();
+                        if query > T::zero() {
+                            let q = query.to_usize().unwrap_or_default();
+                            if q <= report_length {
+                                // a part of the report was requested
+                                self.push(report[report_length - q]);
+                            } else {
+                                // a value outside of the report was requested
+                                let dup = self.sstack.get(q - report_length - 1);
+                                self.push(dup);
+                            }
+                        } else {
+                            // the whole report was requested
+                            for cell in report {
+                                self.push(cell);
+                            }
                         }
                     }
                     // Every other character

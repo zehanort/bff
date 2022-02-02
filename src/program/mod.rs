@@ -33,7 +33,7 @@ impl<T: FungeInteger> From<Vec<Vec<u8>>> for Program<T> {
 
     fn from(mut code: Vec<Vec<u8>>) -> Self {
         let width = code.iter().map(|line| line.len()).max().unwrap_or(1);
-        let height: T = T::from(code.len() as u8).unwrap_or_default();
+        let height: T = T::from(code.len()).unwrap_or_default();
 
         // make all lines have the same width
         for line in &mut code {
