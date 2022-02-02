@@ -130,6 +130,17 @@ impl<T: FungeInteger> Program<T> {
         }
     }
 
+    fn build_fingerprint(&mut self) -> T {
+        let count = self.pop();
+        let mut fp = T::zero();
+        let a = T::from(256).unwrap_or_default();
+        for _ in 0..count.to_usize().unwrap_or_default() {
+            fp = fp * a;
+            fp = fp + self.pop();
+        }
+        fp
+    }
+
     /**
     Executes the cell on which the `cursor` lies.
     For the full Befunge 93 instruction list see
@@ -489,6 +500,7 @@ impl<T: FungeInteger> Program<T> {
                             self.cursor.reflect();
                         }
                     }
+                    // System information retrieval
                     'y' => {
                         let query = self.pop();
                         let report = self.get_full_report();
@@ -509,6 +521,18 @@ impl<T: FungeInteger> Program<T> {
                                 self.push(cell);
                             }
                         }
+                    }
+                    // Load semantics
+                    '(' => {
+                        let _fp = self.build_fingerprint();
+                        // no fingerprints implemented for now
+                        self.cursor.reflect();
+                    }
+                    // Unload semantics
+                    ')' => {
+                        let _fp = self.build_fingerprint();
+                        // no fingerprints implemented for now
+                        self.cursor.reflect();
                     }
                     // Every other character
                     // Note that string mode is OFF here
