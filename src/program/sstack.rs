@@ -42,10 +42,7 @@ impl<T: FungeInteger> SStack<T> {
     or 0 if it is empty.
     */
     pub fn pop_from_toss(&mut self) -> T {
-        match self.get_toss().pop() {
-            Some(x) => x,
-            None => T::zero(),
-        }
+        self.get_toss().pop().unwrap_or_default()
     }
 
     /// Creates a new stack (i.e., a new TOSS).
@@ -81,33 +78,30 @@ impl<T: FungeInteger> SStack<T> {
             let mut toss = self.stacks.pop()?;
             let toss_len = toss.len();
             let soss = self.stacks.last_mut()?;
-            let mut soss_len = soss.len();
-            if soss_len < 2 {
-                None // should never happen
-            } else {
-                // step 1: pop (previous) storage offset
-                let (y, x) = (soss.pop().unwrap(), soss.pop().unwrap());
-                soss_len -= 2;
-                // step 2: move n elements from TOSS to SOSS
-                match n.cmp(&T::zero()) {
-                    std::cmp::Ordering::Less => {
-                        soss.truncate(soss_len - n.abs().to_usize().unwrap());
+            // step 1: pop (previous) storage offset
+            let (y, x) = (
+                soss.pop().unwrap_or_default(),
+                soss.pop().unwrap_or_default(),
+            );
+            let soss_len = soss.len();
+
+            // step 2: move n elements from TOSS to SOSS
+            match n.cmp(&T::zero()) {
+                std::cmp::Ordering::Less => {
+                    soss.truncate(soss_len - n.abs().to_usize().unwrap());
+                }
+                std::cmp::Ordering::Equal => {}
+                std::cmp::Ordering::Greater => {
+                    let n_u = n.to_usize().unwrap();
+                    if n_u > toss_len {
+                        soss.append(&mut [vec![T::zero(); n_u - toss_len], toss.to_vec()].concat());
+                    } else {
+                        soss.append(&mut toss.split_off(toss_len - n_u));
                     }
-                    std::cmp::Ordering::Equal => {}
-                    std::cmp::Ordering::Greater => {
-                        let n_u = n.to_usize().unwrap();
-                        if n_u > toss_len {
-                            soss.append(
-                                &mut [vec![T::zero(); n_u - toss_len], toss.to_vec()].concat(),
-                            );
-                        } else {
-                            soss.append(&mut toss.split_off(toss_len - n_u));
-                        }
-                    }
-                };
-                // step 3: return the previous (and now current) storage offset
-                Some((x, y))
-            }
+                }
+            };
+            // step 3: return the previous (and now current) storage offset
+            Some((x, y))
         }
     }
 
@@ -124,10 +118,7 @@ impl<T: FungeInteger> SStack<T> {
             if n > 0 {
                 let mut popped = vec![];
                 for _ in 0..n {
-                    let x = match from.pop() {
-                        Some(val) => val,
-                        None => T::zero(),
-                    };
+                    let x = from.pop().unwrap_or_default();
                     popped.push(x);
                 }
                 let to = if count > T::zero() {
