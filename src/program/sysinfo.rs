@@ -39,6 +39,7 @@ impl<T: FungeInteger> SystemInfoReporter<T> for Program<T> {
         let flags: u8 = t + (i << 1) + (o << 2) + (e << 3) + (unbuffered << 4);
         vec![T::from(flags).unwrap_or_default()]
     }
+
     // 2
     fn get_cell_size() -> Vec<T> {
         vec![T::from(size_of::<T>()).unwrap_or_default()]
@@ -68,7 +69,7 @@ impl<T: FungeInteger> SystemInfoReporter<T> for Program<T> {
     // 7
     fn get_dimensions(&self) -> Vec<T> {
         // TODO: change that when Unefunge restrictions are implemented for the REPL
-        vec![T::from(2).unwrap_or_default()]
+        vec![T::from(self.get_position().len()).unwrap_or_default()]
     }
 
     // 8
@@ -146,12 +147,8 @@ impl<T: FungeInteger> SystemInfoReporter<T> for Program<T> {
     // 19
     fn get_cli_args() -> Vec<T> {
         let mut res = vec![];
-        let mut interpreter_name_skipped = false;
-        for arg in env::args() {
-            if !interpreter_name_skipped {
-                interpreter_name_skipped = true;
-                continue;
-            }
+        // TODO: replace for loop with map
+        for arg in env::args().next() {
             let mut arg_str: Vec<T> = arg
                 .bytes()
                 .map(|b| T::from(b).unwrap_or_default())

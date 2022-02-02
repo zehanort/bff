@@ -110,18 +110,31 @@ impl<T: FungeInteger> Grid<T> {
     which contains a non-space cell, relative to the origin
     */
     pub fn get_least_point(&self) -> Vec<T> {
-        for (y, line) in self.grid.iter().enumerate() {
-            for (x, c) in line.iter().enumerate() {
-                if *c != T::from(32).unwrap_or_default() {
-                    return vec![
-                        self.neg_offset[0] + T::from(x).unwrap_or_default(),
-                        self.neg_offset[1] + T::from(y).unwrap_or_default(),
-                    ];
-                }
+        let (mut x, mut y) = (0, 0);
+        for i in 0..self.grid[0].len() {
+            if self
+                .grid
+                .iter()
+                .map(|row| row[i])
+                .any(|b| b != T::from(32).unwrap_or_default())
+            {
+                x = i;
+                break;
             }
         }
-        // fallback, should never happen
-        vec![self.neg_offset[0], self.neg_offset[1]]
+        for j in 0..self.grid.len() {
+            if self.grid[j]
+                .iter()
+                .any(|&b| b != T::from(32).unwrap_or_default())
+            {
+                y = j;
+                break;
+            }
+        }
+        vec![
+            T::from(x).unwrap_or_default() + self.neg_offset[0],
+            T::from(y).unwrap_or_default() + self.neg_offset[1],
+        ]
     }
 
     /**
@@ -129,21 +142,30 @@ impl<T: FungeInteger> Grid<T> {
     which contains a non-space cell, relative to the least point
     */
     pub fn get_greatest_point(&self) -> Vec<T> {
-        let least_point = self.get_least_point();
-        for (y, line) in self.grid.iter().enumerate().rev() {
-            for (x, c) in line.iter().enumerate().rev() {
-                if *c != T::from(32).unwrap_or_default() {
-                    return vec![
-                        T::from(x).unwrap_or_default() - least_point[0],
-                        T::from(y).unwrap_or_default() - least_point[1],
-                    ];
-                }
+        let (mut x, mut y) = (0, 0);
+        for i in (0..self.grid[0].len()).rev() {
+            if self
+                .grid
+                .iter()
+                .map(|row| row[i])
+                .any(|b| b != T::from(32).unwrap_or_default())
+            {
+                x = i;
+                break;
             }
         }
-        // fallback, should never happen
+        for j in (0..self.grid.len()).rev() {
+            if self.grid[j]
+                .iter()
+                .any(|&b| b != T::from(32).unwrap_or_default())
+            {
+                y = j;
+                break;
+            }
+        }
         vec![
-            T::from(self.grid.last().unwrap_or(&vec![]).len()).unwrap_or_default() - least_point[0],
-            T::from(self.grid.len()).unwrap_or_default() - least_point[1],
+            T::from(x).unwrap_or_default(),
+            T::from(y).unwrap_or_default(),
         ]
     }
 
