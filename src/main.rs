@@ -1,5 +1,6 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
+use std;
 
 use program::Program;
 
@@ -21,6 +22,7 @@ fn main() -> Result<()> {
                 Program::<i32>::from(vec![unefunge_code])
             }
         };
-        program.run()
+        let exit_code = program.run().context("Runtime error")?;
+        std::process::exit(exit_code);
     }
 }

@@ -149,7 +149,7 @@ impl<T: FungeInteger> Program<T> {
     Returns `true` if the `@` cell was executed
     i.e., the program terminated, and `false` otherwise.
     */
-    fn execute_current_cell(&mut self) -> Result<bool> {
+    fn execute_current_cell(&mut self) -> Result<(bool, i32)> {
         // define a helper macro for overflow checks
         macro_rules! push_with_overflow_check {
             ($a:expr, $op:ident, $b:expr, $message:expr) => {
@@ -164,6 +164,7 @@ impl<T: FungeInteger> Program<T> {
         let position = self.cursor.position();
         let mut k = T::one();
         let mut program_terminated = false;
+        let mut exit_code = 0;
 
         let x = self.get_cell(position);
 
@@ -534,6 +535,11 @@ impl<T: FungeInteger> Program<T> {
                         // no fingerprints implemented for now
                         self.cursor.reflect();
                     }
+                    // Terminate program with exit code
+                    'q' => {
+                        exit_code = self.pop().to_i32().unwrap_or_default();
+                        program_terminated = true;
+                    }
                     // Every other character
                     // Note that string mode is OFF here
                     // (we checked the "ON" case before the match statement)
@@ -548,17 +554,17 @@ impl<T: FungeInteger> Program<T> {
         }
 
         self.move_cursor();
-        Ok(program_terminated)
+        Ok((program_terminated, exit_code))
     }
 
-    /// Runs the Befunge program.
-    pub fn run(&mut self) -> Result<()> {
+    /// Runs the Befunge program and returns an exit code
+    pub fn run(&mut self) -> Result<i32> {
         loop {
-            let program_terminated = self.execute_current_cell().context("Runtime error")?;
+            let (program_terminated, exit_code) =
+                self.execute_current_cell().context("Runtime error")?;
             if program_terminated {
-                break;
+                return Ok(exit_code);
             }
         }
-        Ok(())
     }
 }
