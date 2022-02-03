@@ -126,3 +126,16 @@ fn test_diagonal_negspace() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[ignore]
+fn test_outside_twice() -> Result<()> {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
+    cmd.arg(testcase("outside_twice"))
+        .assert()
+        .success()
+        .stderr("")
+        .stdout("OK\n");
+
+    Ok(())
+}

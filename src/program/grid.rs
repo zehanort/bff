@@ -33,12 +33,13 @@ impl<T: FungeInteger> Index<T> for Grid<T> {
 impl<T: FungeInteger> IndexMut<T> for Grid<T> {
     fn index_mut(&mut self, index: T) -> &mut Self::Output {
         let i_t = index - self.neg_offset[1];
-        let i = i_t.to_usize().unwrap_or_default();
         if i_t >= T::zero() {
             if i_t >= self.bounds.upper_y() {
                 // need to resize height to the positive
-                self.grid
-                    .resize(i + 1, vec![T::from(32).unwrap(); self.grid[0].len()]);
+                self.grid.resize(
+                    i_t.to_usize().unwrap_or_default() + 1,
+                    vec![T::from(32).unwrap(); self.grid[0].len()],
+                );
                 self.bounds.set_upper_y(index + T::one());
             }
         } else {
@@ -47,8 +48,8 @@ impl<T: FungeInteger> IndexMut<T> for Grid<T> {
             let mut neg_expansion = vec![vec![T::from(32).unwrap(); self.grid[0].len()]; neg_len];
             neg_expansion.append(&mut self.grid);
             self.grid = neg_expansion;
-            self.neg_offset[1] = i_t;
-            self.bounds.set_lower_y(i_t);
+            self.neg_offset[1] = self.neg_offset[1] + i_t;
+            self.bounds.set_lower_y(self.neg_offset[1]);
         }
         &mut self.grid[(index - self.neg_offset[1]).to_usize().unwrap()]
     }
@@ -70,12 +71,12 @@ impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
     fn index_mut(&mut self, index: (T, T)) -> &mut Self::Output {
         let neg_offset_x = self.neg_offset[0];
         let x_t = index.0 - neg_offset_x;
-        let x = x_t.to_usize().unwrap_or_default();
         if x_t >= T::zero() {
             if x_t >= self.bounds.upper_x() {
                 // need to resize width OF ALL ROWS to the positive
                 for idx in 0..self.grid.len() {
-                    self.grid[idx].resize(x + 1, T::from(32).unwrap());
+                    self.grid[idx]
+                        .resize(x_t.to_usize().unwrap_or_default() + 1, T::from(32).unwrap());
                 }
                 self.bounds.set_upper_x(index.0 + T::one());
             }
@@ -87,8 +88,8 @@ impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
                 neg_expansion.append(&mut self.grid[idx]);
                 self.grid[idx] = neg_expansion;
             }
-            self.neg_offset[0] = x_t;
-            self.bounds.set_lower_x(x_t);
+            self.neg_offset[0] = self.neg_offset[0] + x_t;
+            self.bounds.set_lower_x(self.neg_offset[0]);
         }
         let new_x_t = index.0 - self.neg_offset[0];
         &mut self[index.1][new_x_t.to_usize().unwrap()]
