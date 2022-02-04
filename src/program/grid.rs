@@ -5,16 +5,11 @@ use std::ops::{Index, IndexMut};
 pub(super) struct Grid<T: FungeInteger> {
     grid: Vec<Vec<T>>,
     bounds: Bounds<T>,
-    neg_offset: [T; 2],
 }
 
 impl<T: FungeInteger> From<(Vec<Vec<T>>, Bounds<T>)> for Grid<T> {
     fn from((grid, bounds): (Vec<Vec<T>>, Bounds<T>)) -> Self {
-        Self {
-            grid,
-            bounds,
-            neg_offset: [T::zero(), T::zero()],
-        }
+        Self { grid, bounds }
     }
 }
 
@@ -22,7 +17,7 @@ impl<T: FungeInteger> Index<T> for Grid<T> {
     type Output = Vec<T>;
 
     fn index(&self, index: T) -> &Self::Output {
-        let y = index - self.neg_offset[1];
+        let y = index - self.bounds.lower_y();
         // if this panics, something is broken in the logic:
         // Execution should NEVER reach here if y < 0
         &self.grid[y.to_usize().unwrap()]
@@ -32,7 +27,7 @@ impl<T: FungeInteger> Index<T> for Grid<T> {
 // Resizes Funge-Space if necessary
 impl<T: FungeInteger> IndexMut<T> for Grid<T> {
     fn index_mut(&mut self, index: T) -> &mut Self::Output {
-        let i_t = index - self.neg_offset[1];
+        let i_t = index - self.bounds.lower_y();
         if i_t >= T::zero() {
             if i_t >= self.bounds.upper_y() {
                 // need to resize height to the positive
@@ -48,10 +43,9 @@ impl<T: FungeInteger> IndexMut<T> for Grid<T> {
             let mut neg_expansion = vec![vec![T::from(32).unwrap(); self.grid[0].len()]; neg_len];
             neg_expansion.append(&mut self.grid);
             self.grid = neg_expansion;
-            self.neg_offset[1] = self.neg_offset[1] + i_t;
-            self.bounds.set_lower_y(self.neg_offset[1]);
+            self.bounds.set_lower_y(self.bounds.lower_y() + i_t);
         }
-        let new_y_t = index - self.neg_offset[1];
+        let new_y_t = index - self.bounds.lower_y();
         &mut self.grid[new_y_t.to_usize().unwrap()]
     }
 }
@@ -60,7 +54,7 @@ impl<T: FungeInteger> Index<(T, T)> for Grid<T> {
     type Output = T;
 
     fn index(&self, index: (T, T)) -> &Self::Output {
-        let x = index.0 - self.neg_offset[0];
+        let x = index.0 - self.bounds.lower_x();
         // if this panics, something is broken in the logic:
         // Execution should NEVER reach here if x < 0
         &self[index.1][x.to_usize().unwrap()]
@@ -70,7 +64,7 @@ impl<T: FungeInteger> Index<(T, T)> for Grid<T> {
 // Resizes Funge-Space if necessary
 impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
     fn index_mut(&mut self, index: (T, T)) -> &mut Self::Output {
-        let neg_offset_x = self.neg_offset[0];
+        let neg_offset_x = self.bounds.lower_x();
         let x_t = index.0 - neg_offset_x;
         if x_t >= T::zero() {
             if x_t >= self.bounds.upper_x() {
@@ -89,10 +83,9 @@ impl<T: FungeInteger> IndexMut<(T, T)> for Grid<T> {
                 neg_expansion.append(&mut self.grid[idx]);
                 self.grid[idx] = neg_expansion;
             }
-            self.neg_offset[0] = self.neg_offset[0] + x_t;
-            self.bounds.set_lower_x(self.neg_offset[0]);
+            self.bounds.set_lower_x(self.bounds.lower_x() + x_t);
         }
-        let new_x_t = index.0 - self.neg_offset[0];
+        let new_x_t = index.0 - self.bounds.lower_x();
         &mut self[index.1][new_x_t.to_usize().unwrap()]
     }
 }
@@ -134,8 +127,8 @@ impl<T: FungeInteger> Grid<T> {
             }
         }
         vec![
-            T::from(x).unwrap_or_default() + self.neg_offset[0],
-            T::from(y).unwrap_or_default() + self.neg_offset[1],
+            T::from(x).unwrap_or_default() + self.bounds.lower_x(),
+            T::from(y).unwrap_or_default() + self.bounds.lower_y(),
         ]
     }
 
@@ -180,7 +173,7 @@ impl<T: FungeInteger> Grid<T> {
     */
     pub fn shrink(&mut self, position: (T, T)) {
         /* should the rows be shrunk? */
-        if position.1 == T::from(self.grid.len()).unwrap() + self.neg_offset[1] - T::one() {
+        if position.1 == T::from(self.grid.len()).unwrap() + self.bounds.lower_y() - T::one() {
             // we MAY need to shrink Y from the positive
             while self
                 .grid
@@ -197,12 +190,11 @@ impl<T: FungeInteger> Grid<T> {
             while self.grid[0].iter().all(|&c| c == T::from(32).unwrap()) {
                 self.grid.remove(0);
                 self.bounds.set_lower_y(self.bounds.lower_y() + T::one());
-                self.neg_offset[1] = self.neg_offset[1] + T::one();
             }
         }
 
         /* should the columns be shrunk? */
-        if position.0 == T::from(self.grid[0].len()).unwrap() + self.neg_offset[0] - T::one() {
+        if position.0 == T::from(self.grid[0].len()).unwrap() + self.bounds.lower_x() - T::one() {
             // we MAY need to shrink X from the positive
             while self
                 .grid
@@ -227,7 +219,6 @@ impl<T: FungeInteger> Grid<T> {
                     row.remove(0);
                 }
                 self.bounds.set_lower_x(self.bounds.lower_x() + T::one());
-                self.neg_offset[0] = self.neg_offset[0] + T::one();
             }
         }
     }
