@@ -40,14 +40,14 @@ impl<T: FungeInteger> From<Vec<Vec<u8>>> for Program<T> {
             line.resize(width, 32);
         }
 
-        let source = code
+        let source: Vec<Vec<T>> = code
             .iter()
             .map(|line| {
                 line.iter()
                     .map(|b| T::from(*b).unwrap_or_default())
                     .collect()
             })
-            .collect::<Vec<Vec<T>>>();
+            .collect();
 
         let bounds = Bounds::new(
             T::zero(),
@@ -74,11 +74,21 @@ impl<T: FungeInteger> TryFrom<PathBuf> for Program<T> {
         let contents = fs::read(filename).context("Failed to read Befunge source file")?;
         // step 2: split in lines by...
         let code: Vec<&[u8]> = contents
-            .split_str(b"\r\n") // ...\r\n
-            .flat_map(|line| line.split_str(b"\r")) // ...\r
-            .flat_map(|line| line.split_str(b"\n")) // ...and \n
+            .split_str("\r\n") // ...\r\n
+            .flat_map(|line| line.split_str("\r")) // ...\r
+            .flat_map(|line| line.split_str("\n")) // ... and \n
             .collect();
-        let code: Vec<Vec<u8>> = code.iter().map(|line| line.to_vec()).collect();
+        // step 3: collect and remove form feed characters
+        let code: Vec<Vec<u8>> = code
+            .iter()
+            .map(|line| {
+                line.to_vec()
+                    .iter()
+                    .filter(|b| **b != 12)
+                    .copied()
+                    .collect()
+            })
+            .collect();
 
         Ok(Program::from(code))
     }
