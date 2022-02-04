@@ -34,7 +34,8 @@ fn test_mycology() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
     cmd.arg(testcase98("mycology"))
         .assert()
-        .success()
+        .failure()
+        .code(predicate::eq(15))
         .stdout(predicate::str::contains("BAD").not());
 
     Ok(())
