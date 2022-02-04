@@ -1,9 +1,9 @@
 [package]
 name = "bff"
 authors = ["Sotiris Niarchos <sot.niarchos@gmail.com>"]
-version = "0.4.0"
+version = "1.0.0"
 edition = "2021"
-description = "A Befunge 93 (and soon 98) interpreter in Rust"
+description = "A complete Befunge 98 interpreter in Rust"
 keywords = ["interpreter", "befunge"]
 categories = ["command-line-utilities", "compilers"]
 repository = "https://github.com/zehanort/bff"
