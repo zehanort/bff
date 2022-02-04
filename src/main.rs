@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use std;
 
 use program::Program;
 
