@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '**/README.md'
-      - '**/publish.yml'
+      - "**/README.md"
+      - "**/publish.yml"
   pull_request:
     branches: [main]
     paths-ignore:
-      - '**/README.md'
-      - '**/publish.yml'
+      - "**/README.md"
+      - "**/publish.yml"
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,7 +34,9 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Install nightly cargo toolchain
         uses: actions-rs/toolchain@v1

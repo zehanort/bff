@@ -11,11 +11,14 @@ fn testcase(name: &str) -> String {
 }
 
 #[test]
-fn test_no_file() -> Result<()> {
+fn test_file_and_une() -> Result<()> {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    cmd.assert()
+    cmd.arg("sengelebengele")
+        .arg("-u")
+        .arg("sengelebengele")
+        .assert()
         .failure()
-        .stderr("Error: No Befunge 98 program file was provided\n");
+        .stderr(predicate::str::contains("cannot be used with"));
     Ok(())
 }
 
@@ -26,7 +29,7 @@ fn test_wrong_path() -> Result<()> {
         .assert()
         .failure()
         .stderr(predicate::str::starts_with(
-            "Error: Failed to open Befunge source file",
+            "Error: Failed to read Befunge source file",
         ));
     Ok(())
 }

@@ -37,7 +37,7 @@ fn test_hello_world() -> Result<()> {
 #[test]
 fn test_factorial() -> Result<()> {
     let filename = testcase("factorial");
-    for (query, answer) in vec![("4", "24 "), ("6", "720 "), ("10", "3628800 ")] {
+    for (query, answer) in [("4", "24 "), ("6", "720 "), ("10", "3628800 ")] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(query)
@@ -59,22 +59,9 @@ fn test_quine() -> Result<()> {
 }
 
 #[test]
-fn test_mycorand() -> Result<()> {
-    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
-    let filename = testcase("mycorand");
-    let predicate_fn = predicate::str::is_match(
-        "The directions were generated in the order [<>^v]{4}\n\\? was met [0-9]+ times\n",
-    )
-    .unwrap();
-    cmd.arg(filename).assert().success().stdout(predicate_fn);
-
-    Ok(())
-}
-
-#[test]
 fn test_compare() -> Result<()> {
     let filename = testcase("compare");
-    for (a, b, comp) in vec![("12", "135", "<"), ("53", "-123", ">"), ("42", "42", "=")] {
+    for (a, b, comp) in [("12", "135", "<"), ("53", "-123", ">"), ("42", "42", "=")] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(format!("{}\n{}", a, b))
@@ -89,7 +76,7 @@ fn test_compare() -> Result<()> {
 #[test]
 fn test_primecheck() -> Result<()> {
     let filename = testcase("primecheck");
-    for p in vec!["5", "7", "139", "337", "1193", "4357", "15269", "108877"] {
+    for p in ["5", "7", "139", "337", "1193", "4357", "15269", "108877"] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(p)
@@ -97,7 +84,7 @@ fn test_primecheck() -> Result<()> {
             .success()
             .stdout("Yes");
     }
-    for np in vec!["6", "8", "140", "338", "1194", "4358", "15279", "108977"] {
+    for np in ["6", "8", "140", "338", "1194", "4358", "15279", "108977"] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(np)
@@ -164,7 +151,7 @@ fn test_div_by_zero() -> Result<()> {
 fn test_read_int_with_chars() -> Result<()> {
     let filename = testcase("echo_int");
 
-    for (pre, suf) in vec![("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
+    for (pre, suf) in [("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(format!("{}12345{}", pre, suf))
@@ -173,7 +160,7 @@ fn test_read_int_with_chars() -> Result<()> {
             .stdout("12345 ");
     }
 
-    for (pre, suf) in vec![("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
+    for (pre, suf) in [("", ""), ("abc", ""), ("", "def"), ("abc", "def")] {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME"))?;
         cmd.arg(&filename)
             .write_stdin(format!("{}-12345{}", pre, suf))
@@ -188,7 +175,7 @@ fn test_read_int_with_chars() -> Result<()> {
 #[test]
 fn test_read_int_limits() -> Result<()> {
     let filename = testcase("echo_int");
-    for (n_in, n_out) in vec![
+    for (n_in, n_out) in [
         ("2147483647", "2147483647 "),
         ("2147483648", "214748364 "),
         ("-2147483647", "-2147483647 "),
