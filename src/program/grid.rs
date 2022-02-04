@@ -51,7 +51,8 @@ impl<T: FungeInteger> IndexMut<T> for Grid<T> {
             self.neg_offset[1] = self.neg_offset[1] + i_t;
             self.bounds.set_lower_y(self.neg_offset[1]);
         }
-        &mut self.grid[(index - self.neg_offset[1]).to_usize().unwrap()]
+        let new_y_t = index - self.neg_offset[1];
+        &mut self.grid[new_y_t.to_usize().unwrap()]
     }
 }
 
@@ -168,6 +169,67 @@ impl<T: FungeInteger> Grid<T> {
             T::from(x).unwrap_or_default(),
             T::from(y).unwrap_or_default(),
         ]
+    }
+
+    /**
+    Checks if a shrinking of the grid space is in order and,
+    if it is, it performs it.
+
+    This method should only be called after a `p` instruction that puts a space;
+    otherwise, it does nothing and just wastes execution time in redundant checks.
+    */
+    pub fn shrink(&mut self, position: (T, T)) {
+        /* should the rows be shrunk? */
+        if position.1 == T::from(self.grid.len()).unwrap() + self.neg_offset[1] - T::one() {
+            // we MAY need to shrink Y from the positive
+            while self
+                .grid
+                .last()
+                .unwrap()
+                .iter()
+                .all(|&c| c == T::from(32).unwrap())
+            {
+                self.grid.pop();
+                self.bounds.set_upper_y(self.bounds.upper_y() - T::one());
+            }
+        } else if position.1 == self.bounds.lower_y() {
+            // we MAY need to shrink Y from the negative
+            while self.grid[0].iter().all(|&c| c == T::from(32).unwrap()) {
+                self.grid.remove(0);
+                self.bounds.set_lower_y(self.bounds.lower_y() + T::one());
+                self.neg_offset[1] = self.neg_offset[1] + T::one();
+            }
+        }
+
+        /* should the columns be shrunk? */
+        if position.0 == T::from(self.grid[0].len()).unwrap() + self.neg_offset[0] - T::one() {
+            // we MAY need to shrink X from the positive
+            while self
+                .grid
+                .iter()
+                .map(|row| row.last().unwrap())
+                .all(|&c| c == T::from(32).unwrap())
+            {
+                for row in self.grid.iter_mut() {
+                    row.pop();
+                }
+                self.bounds.set_upper_x(self.bounds.upper_x() - T::one());
+            }
+        } else if position.0 == self.bounds.lower_x() {
+            // we MAY need to shrink X from the negative
+            while self
+                .grid
+                .iter()
+                .map(|row| row[0])
+                .all(|c| c == T::from(32).unwrap())
+            {
+                for row in self.grid.iter_mut() {
+                    row.remove(0);
+                }
+                self.bounds.set_lower_x(self.bounds.lower_x() + T::one());
+                self.neg_offset[0] = self.neg_offset[0] + T::one();
+            }
+        }
     }
 
     #[cfg(test)]

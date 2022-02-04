@@ -50,6 +50,9 @@ impl<T: FungeInteger> Program<T> {
     */
     fn put_cell(&mut self, position: (T, T), c: T) {
         self.grid[position] = c;
+        if c == T::from(32).unwrap() {
+            self.grid.shrink(position);
+        }
     }
 
     /**
