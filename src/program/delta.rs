@@ -14,8 +14,8 @@ pub(super) struct Delta<T: FungeInteger> {
 
 impl<T: FungeInteger> ops::MulAssign<T> for Delta<T> {
     fn mul_assign(&mut self, factor: T) {
-        self.x = self.x * factor;
-        self.y = self.y * factor;
+        self.x *= factor;
+        self.y *= factor;
     }
 }
 

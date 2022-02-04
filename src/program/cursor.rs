@@ -85,15 +85,15 @@ impl<T: FungeInteger> Cursor<T> {
         if bounds.out_of_bounds((new_x, new_y)) {
             self.reflect();
             loop {
-                new_x = new_x + self.delta.x;
-                new_y = new_y + self.delta.y;
+                new_x += self.delta.x;
+                new_y += self.delta.y;
                 if bounds.out_of_bounds((new_x, new_y)) {
                     break;
                 }
             }
             self.reflect();
-            new_x = new_x + self.delta.x;
-            new_y = new_y + self.delta.y;
+            new_x += self.delta.x;
+            new_y += self.delta.y;
         }
         self.set_position(new_x, new_y);
     }

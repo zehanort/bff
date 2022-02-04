@@ -6,6 +6,9 @@ pub trait FungeInteger:
     + num_traits::ops::overflowing::OverflowingSub
     + num_traits::ToPrimitive
     + Default
+    + std::ops::AddAssign
+    + std::ops::SubAssign
+    + std::ops::MulAssign
     + std::fmt::Display
     + std::fmt::Debug
 {
@@ -19,6 +22,9 @@ impl<
             + num_traits::ops::overflowing::OverflowingSub
             + num_traits::ToPrimitive
             + Default
+            + std::ops::AddAssign
+            + std::ops::SubAssign
+            + std::ops::MulAssign
             + std::fmt::Display
             + std::fmt::Debug,
     > FungeInteger for T

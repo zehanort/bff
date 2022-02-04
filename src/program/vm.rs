@@ -138,8 +138,8 @@ impl<T: FungeInteger> Program<T> {
         let mut fp = T::zero();
         let a = T::from(256).unwrap_or_default();
         for _ in 0..count.to_usize().unwrap_or_default() {
-            fp = fp * a;
-            fp = fp + self.pop();
+            fp *= a;
+            fp += self.pop();
         }
         fp
     }
@@ -430,7 +430,7 @@ impl<T: FungeInteger> Program<T> {
                         if k == T::zero() {
                             self.move_cursor(); // simply skip next instruction, like `#`
                         } else {
-                            k = k + T::one(); // to counter the -= 1 at the end of the while loop
+                            k += T::one(); // to counter the -= 1 at the end of the while loop
                             xchar = self.peek();
                         }
                     }
@@ -470,7 +470,7 @@ impl<T: FungeInteger> Program<T> {
                         n = n.abs();
                         while n > T::zero() {
                             self.move_cursor();
-                            n = n - T::one();
+                            n -= T::one();
                         }
                         if negative {
                             self.cursor.reflect();
@@ -550,7 +550,7 @@ impl<T: FungeInteger> Program<T> {
                     // (imitating the "r" instruction which will be added later...)
                     _ => self.cursor.reflect(),
                 }
-                k = k - T::one();
+                k -= T::one();
             }
         } else {
             self.cursor.reflect()
