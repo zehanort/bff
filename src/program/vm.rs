@@ -1,4 +1,7 @@
-use super::{delta::Delta, fungetypes::FungeInteger, sysinfo::SystemInfoReporter, Program};
+use super::{
+    delta::Delta, fingerprints::FPManager, fungetypes::FungeInteger, sysinfo::SystemInfoReporter,
+    Program,
+};
 use anyhow::{bail, Context, Result};
 use colour::e_yellow;
 use std::io::{self, Read, Write};
@@ -12,14 +15,14 @@ macro_rules! warning {
 
 impl<T: FungeInteger> Program<T> {
     /// Pushes `x` into the program stack.
-    fn push(&mut self, x: T) {
+    pub fn push(&mut self, x: T) {
         self.sstack.push_onto_toss(x);
     }
 
     /**
     Pops and returns a `T` from the program stack.
     */
-    fn pop(&mut self) -> T {
+    pub fn pop(&mut self) -> T {
         self.sstack.pop_from_toss()
     }
 
@@ -152,7 +155,7 @@ impl<T: FungeInteger> Program<T> {
     Returns `true` if the `@` cell was executed
     i.e., the program terminated, and `false` otherwise.
     */
-    fn execute_current_cell(&mut self) -> Result<(bool, i32)> {
+    fn execute_current_cell(&mut self, fpmanager: &mut FPManager<T>) -> Result<(bool, i32)> {
         // define a helper macro for overflow checks
         macro_rules! push_with_overflow_check {
             ($a:expr, $op:ident, $b:expr, $message:expr) => {
@@ -528,20 +531,29 @@ impl<T: FungeInteger> Program<T> {
                     }
                     // Load semantics
                     '(' => {
-                        let _fp = self.build_fingerprint();
-                        // no fingerprints implemented for now
-                        self.cursor.reflect();
+                        let fp_id = self.build_fingerprint();
+                        if fpmanager.load(fp_id) {
+                            self.push(fp_id);
+                            self.push(T::one());
+                        } else {
+                            self.cursor.reflect();
+                        }
                     }
                     // Unload semantics
                     ')' => {
-                        let _fp = self.build_fingerprint();
-                        // no fingerprints implemented for now
-                        self.cursor.reflect();
+                        let fp_id = self.build_fingerprint();
+                        if !fpmanager.unload(fp_id) {
+                            self.cursor.reflect();
+                        }
                     }
                     // Terminate program with exit code
                     'q' => {
                         exit_code = self.pop().to_i32().unwrap_or_default();
                         program_terminated = true;
+                    }
+                    // Additional semantics - passed to the FPManager
+                    c if c.is_ascii_uppercase() => {
+                        fpmanager.execute(self, c);
                     }
                     // Every other character
                     // Note that string mode is OFF here
@@ -561,10 +573,11 @@ impl<T: FungeInteger> Program<T> {
     }
 
     /// Runs the Befunge program and returns an exit code
-    pub fn run(&mut self) -> Result<i32> {
+    pub fn run(&mut self, fpmanager: &mut FPManager<T>) -> Result<i32> {
         loop {
-            let (program_terminated, exit_code) =
-                self.execute_current_cell().context("Runtime error")?;
+            let (program_terminated, exit_code) = self
+                .execute_current_cell(fpmanager)
+                .context("Runtime error")?;
             if program_terminated {
                 return Ok(exit_code);
             }

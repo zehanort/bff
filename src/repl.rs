@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use std::{io, io::prelude::*};
 
-use crate::program::Program;
+use crate::program::{fingerprints::FPManager, fungetypes::FungeInteger, Program};
 
-pub fn start() -> Result<()> {
+pub fn start<T: FungeInteger>(fpmanager: &mut FPManager<T>) -> Result<()> {
     println!("{} - Unefunge 98 REPL", env!("CARGO_PKG_NAME"));
     println!("version {}", env!("CARGO_PKG_VERSION"));
     println!("(type \"exit\" or \"quit\" and press <Enter> or press <Ctrl> + C to quit)");
@@ -35,8 +35,8 @@ pub fn start() -> Result<()> {
         code.push('@');
 
         // step 6: evaluate code
-        let mut program = Program::<i32>::from(vec![code.into_bytes()]);
-        program.run()?;
+        let mut program = Program::<T>::from(vec![code.into_bytes()]);
+        program.run(fpmanager).context("Runtime error")?;
 
         println!();
     }

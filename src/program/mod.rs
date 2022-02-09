@@ -11,6 +11,7 @@ use sstack::SStack;
 mod bounds;
 mod cursor;
 mod delta;
+pub(crate) mod fingerprints;
 pub(super) mod fungetypes;
 mod grid;
 mod sstack;
