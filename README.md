@@ -7,14 +7,14 @@
 
 ## What?
 
-`bff` (which stands for *Befunge Forever*) is a toy project, the secondary purpose of which is to interpret Befunge 98 progams.
+`bff` (which stands for _Befunge Forever_) is a toy project, the secondary purpose of which is to interpret Befunge 98 progams.
 
 Its primary purpose is learning Rust.
 
 ## Befunge?
 
 **Befunge 93** is an awesome [esoteric](https://en.wikipedia.org/wiki/Esoteric_programming_language) stack-based programming language,
-where the program is not a sequence but a *grid* of instructions, like the following program that reads an integer from stdin and prints its factorial:
+where the program is not a sequence but a _grid_ of instructions, like the following program that reads an integer from stdin and prints its factorial:
 
 ```befunge
 &>:1-:v v *_$.@
@@ -26,7 +26,7 @@ until it meets the `@` instruction, terminating the execution of the program.
 
 You can read more about Befunge 93 [here](https://github.com/catseye/Befunge-93/blob/master/doc/Befunge-93.markdown).
 
-**Befunge 98** is a Turing-complete extension of Befunge 93. Tt expands the program grid infinitely (Befunge 93 limits it to 80x25), adds file I/O operations,
+**Befunge 98** is a Turing-complete extension of Befunge 93. It expands the program grid infinitely (Befunge 93 limits it to 80x25), adds file I/O operations,
 support for libraries (which it calls "fingerprints"), and much much more.
 
 You can read more about Befunge 98 [here](https://github.com/catseye/Funge-98/blob/master/doc/funge98.markdown).
@@ -37,7 +37,18 @@ You can read more about Befunge 98 [here](https://github.com/catseye/Funge-98/bl
 
 Currently, it is a Befunge 98 interpreter that completely conforms to the [official language specs](https://github.com/catseye/Funge-98/blob/master/doc/funge98.markdown) and successfully passes the [Mycology testsuite](https://github.com/Deewiant/Mycology).
 
-Right now, `bff` does not implement anything that is not considered part of the core of the language (e.g., fingerprints, concurrency etc). It is planned to introduce additional features in subsequent versions of `bff`.
+It is planned to introduce additional features, like concurrency and file operations, in subsequent versions of `bff`.
+
+### Implemented Fingerprints
+
+| Name   | ID           | Documentation                                                                                                                                  | Since Version |
+| ------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `BASE` | `0x42415345` | [link](https://www.rcfunge98.com/rcfunge2_manual.html#BASE)                                                                                    | 1.1.0         |
+| `CPLI` | `0x43504C49` | [link](https://www.rcfunge98.com/rcfunge2_manual.html#CPLI)                                                                                    | 1.1.0         |
+| `EVAR` | `0x45564152` | [link](https://www.rcfunge98.com/rcfunge2_manual.html#EVAR)                                                                                    | 1.1.0         |
+| `MODU` | `0x4d4f4455` | [link 1](https://github.com/catseye/Funge-98/blob/master/library/MODU.markdown), [link 2](https://www.rcfunge98.com/rcfunge2_manual.html#MODU) | 1.1.0         |
+| `NULL` | `0x4e554c4c` | [link 1](https://github.com/catseye/Funge-98/blob/master/library/NULL.markdown), [link 2](https://www.rcfunge98.com/rcfunge2_manual.html#NULL) | 1.1.0         |
+| `ROMA` | `0x524f4d41` | [link 1](https://github.com/catseye/Funge-98/blob/master/library/ROMA.markdown), [link 2](https://www.rcfunge98.com/rcfunge2_manual.html#ROMA) | 1.1.0         |
 
 **Any comments/remarks/criticism in the form of issues are welcome**.
 
@@ -96,7 +107,7 @@ bff - Unefunge 98 REPL
 version 1.0.0
 (type "exit" or "quit" and press <Enter> or press <Ctrl> + C to quit)
 > 2a*.
-20 
+20
 > exit
 $
 ```
