@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use super::Fingerprint;
 use crate::program::{fungetypes::FungeInteger, Program};
 
@@ -12,7 +14,7 @@ impl<T: FungeInteger> Fingerprint<T> for ROMA {
         "CDILMVX"
     }
 
-    fn execute(&self, program: &mut Program<T>, instruction: char) -> bool {
+    fn execute(&self, program: &mut Program<T>, instruction: char) -> Result<bool> {
         match instruction {
             'C' => program.push(T::from(100).unwrap()),
             'D' => program.push(T::from(500).unwrap()),
@@ -21,8 +23,8 @@ impl<T: FungeInteger> Fingerprint<T> for ROMA {
             'M' => program.push(T::from(1000).unwrap()),
             'V' => program.push(T::from(5).unwrap()),
             'X' => program.push(T::from(10).unwrap()),
-            _ => return false,
+            _ => return Ok(false),
         };
-        true
+        Ok(true)
     }
 }

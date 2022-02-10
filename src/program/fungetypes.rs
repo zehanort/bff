@@ -10,6 +10,9 @@ pub trait FungeInteger:
     + std::ops::SubAssign
     + std::ops::MulAssign
     + std::fmt::Display
+    + std::fmt::Binary
+    + std::fmt::LowerHex
+    + std::fmt::Octal
     + std::fmt::Debug
 {
 }
@@ -26,6 +29,9 @@ impl<
             + std::ops::SubAssign
             + std::ops::MulAssign
             + std::fmt::Display
+            + std::fmt::Binary
+            + std::fmt::LowerHex
+            + std::fmt::Octal
             + std::fmt::Debug,
     > FungeInteger for T
 {

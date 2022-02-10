@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use self::library::Fingerprint;
 use super::{fungetypes::FungeInteger, Program};
 
@@ -19,7 +21,14 @@ impl<'a, T: FungeInteger> FPManager<'a, T> {
     pub fn new() -> Self {
         Self {
             // holds all the implemented fingerprints
-            available: vec![Box::new(&ROMA {}), Box::new(&MODU {})],
+            available: vec![
+                Box::new(&BASE {}),
+                Box::new(&CPLI {}),
+                Box::new(&EVAR {}),
+                Box::new(&MODU {}),
+                Box::new(&NULL {}),
+                Box::new(&ROMA {}),
+            ],
             // holds the indices in the `available` vector of the fingerprints
             // that have been loaded in order, as a stack
             loaded: vec![],
@@ -58,14 +67,14 @@ impl<'a, T: FungeInteger> FPManager<'a, T> {
         false
     }
 
-    pub fn execute(&mut self, program: &mut Program<T>, instruction: char) -> bool {
+    pub fn execute(&mut self, program: &mut Program<T>, instruction: char) -> Result<bool> {
         let instruction_idx = instruction as usize - OFFSET;
         match self.istacks[instruction_idx].last() {
             Some(&fp_idx) => {
                 let fp = &self.available[fp_idx];
                 fp.execute(program, instruction)
             }
-            None => false,
+            None => Ok(false),
         }
     }
 }

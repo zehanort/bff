@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use super::Fingerprint;
 use crate::program::{fungetypes::FungeInteger, Program};
 
@@ -12,9 +14,9 @@ impl<T: FungeInteger> Fingerprint<T> for MODU {
         "MUR"
     }
 
-    fn execute(&self, program: &mut Program<T>, instruction: char) -> bool {
+    fn execute(&self, program: &mut Program<T>, instruction: char) -> Result<bool> {
         if !"MUR".contains(instruction) {
-            false
+            Ok(false)
         } else {
             let (a, b) = (program.pop(), program.pop());
             if a == T::zero() {
@@ -35,10 +37,10 @@ impl<T: FungeInteger> Fingerprint<T> for MODU {
                         });
                     }
                     'R' => program.push(b % a),
-                    _ => {}
+                    _ => return Ok(false),
                 };
             }
-            true
+            Ok(true)
         }
     }
 }

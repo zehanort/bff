@@ -136,6 +136,30 @@ impl<T: FungeInteger> Program<T> {
         }
     }
 
+    /// Pops values from the stack until it reaches a `0`
+    /// and returns a string constructed by said values.
+    pub fn get_string(&mut self) -> String {
+        let mut s = vec![];
+        loop {
+            let c = self.pop();
+            if c == T::zero() {
+                break;
+            } else {
+                s.push(char::from_u32(c.to_u32().unwrap()).unwrap_or(' '));
+            }
+        }
+        s.into_iter().collect()
+    }
+
+    /// Pushes a `0` in the stack, then the characters
+    /// of the string in reverse order.
+    pub fn push_string(&mut self, s: String) {
+        self.push(T::zero());
+        for c in s.bytes().rev() {
+            self.push(T::from(c).unwrap_or(T::from(32).unwrap()));
+        }
+    }
+
     fn build_fingerprint(&mut self) -> T {
         let count = self.pop();
         let mut fp = T::zero();
@@ -553,7 +577,7 @@ impl<T: FungeInteger> Program<T> {
                     }
                     // Additional semantics - passed to the FPManager
                     c if c.is_ascii_uppercase() => {
-                        if !fpmanager.execute(self, c) {
+                        if !fpmanager.execute(self, c)? {
                             self.cursor.reflect();
                         }
                     }
