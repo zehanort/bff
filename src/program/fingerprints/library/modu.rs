@@ -8,6 +8,10 @@ impl<T: FungeInteger> Fingerprint<T> for MODU {
         "MODU"
     }
 
+    fn get_instructions(&self) -> &str {
+        "MUR"
+    }
+
     fn execute(&self, program: &mut Program<T>, instruction: char) -> bool {
         if !"MUR".contains(instruction) {
             false

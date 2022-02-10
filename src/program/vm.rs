@@ -553,7 +553,9 @@ impl<T: FungeInteger> Program<T> {
                     }
                     // Additional semantics - passed to the FPManager
                     c if c.is_ascii_uppercase() => {
-                        fpmanager.execute(self, c);
+                        if !fpmanager.execute(self, c) {
+                            self.cursor.reflect();
+                        }
                     }
                     // Every other character
                     // Note that string mode is OFF here

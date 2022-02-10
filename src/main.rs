@@ -9,7 +9,7 @@ mod repl;
 
 fn main() -> Result<()> {
     let args = args::Args::parse();
-    let mut fpmanager = FPManager::<'static, i32>::default();
+    let mut fpmanager = FPManager::<'static, i32>::new();
     if args.file.is_none() && args.ucode.is_none() {
         repl::start::<i32>(&mut fpmanager)
     } else {

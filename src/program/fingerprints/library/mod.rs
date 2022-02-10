@@ -18,5 +18,7 @@ pub trait Fingerprint<T: FungeInteger> {
         .unwrap_or_default()
     }
 
+    fn get_instructions(&self) -> &str;
+
     fn execute(&self, program: &mut Program<T>, instruction: char) -> bool;
 }

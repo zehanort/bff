@@ -8,21 +8,21 @@ impl<T: FungeInteger> Fingerprint<T> for ROMA {
         "ROMA"
     }
 
+    fn get_instructions(&self) -> &str {
+        "CDILMVX"
+    }
+
     fn execute(&self, program: &mut Program<T>, instruction: char) -> bool {
-        if !"CDILMVX".contains(instruction) {
-            false
-        } else {
-            match instruction {
-                'C' => program.push(T::from(100).unwrap()),
-                'D' => program.push(T::from(500).unwrap()),
-                'I' => program.push(T::from(1).unwrap()),
-                'L' => program.push(T::from(50).unwrap()),
-                'M' => program.push(T::from(1000).unwrap()),
-                'V' => program.push(T::from(5).unwrap()),
-                'X' => program.push(T::from(10).unwrap()),
-                _ => {}
-            };
-            true
-        }
+        match instruction {
+            'C' => program.push(T::from(100).unwrap()),
+            'D' => program.push(T::from(500).unwrap()),
+            'I' => program.push(T::from(1).unwrap()),
+            'L' => program.push(T::from(50).unwrap()),
+            'M' => program.push(T::from(1000).unwrap()),
+            'V' => program.push(T::from(5).unwrap()),
+            'X' => program.push(T::from(10).unwrap()),
+            _ => return false,
+        };
+        true
     }
 }

@@ -5,16 +5,39 @@ use library::*;
 
 mod library;
 
+type Istacks = [Vec<usize>; 26];
+
+const OFFSET: usize = 'A' as usize;
+
 pub struct FPManager<'a, T: FungeInteger> {
     available: Vec<Box<&'a dyn Fingerprint<T>>>,
-    loaded: Vec<Box<&'a dyn Fingerprint<T>>>,
+    loaded: Vec<usize>,
+    istacks: Istacks,
 }
 
 impl<'a, T: FungeInteger> FPManager<'a, T> {
+    pub fn new() -> Self {
+        Self {
+            // holds all the implemented fingerprints
+            available: vec![Box::new(&ROMA {}), Box::new(&MODU {})],
+            // holds the indices in the `available` vector of the fingerprints
+            // that have been loaded in order, as a stack
+            loaded: vec![],
+            // holds a stack for each capital letter;
+            // each stack holds the indices in the `loaded` vector of the fingerprints that
+            // implement this letter;
+            // they are stacks, so the "active" implementation is always the topmost
+            istacks: vec![vec![]; 26].try_into().unwrap(),
+        }
+    }
+
     pub fn load(&mut self, id: T) -> bool {
-        for fp in self.available.iter() {
+        for (fp_idx, fp) in self.available.iter().enumerate() {
             if fp.get_id() == id {
-                self.loaded.push(fp.clone());
+                for instruction in fp.get_instructions().chars() {
+                    self.istacks[instruction as usize - OFFSET].push(fp_idx);
+                }
+                self.loaded.push(fp_idx);
                 return true;
             }
         }
@@ -22,9 +45,13 @@ impl<'a, T: FungeInteger> FPManager<'a, T> {
     }
 
     pub fn unload(&mut self, id: T) -> bool {
-        for (i, fp) in self.loaded.iter().enumerate() {
-            if fp.get_id() == id {
-                self.loaded.remove(i);
+        for (loaded_fp_idx, &fp_idx) in self.loaded.iter().enumerate().rev() {
+            if self.available[fp_idx].get_id() == id {
+                self.loaded.remove(loaded_fp_idx);
+                let unloaded_fp = &self.available[fp_idx];
+                for instruction in unloaded_fp.get_instructions().chars() {
+                    self.istacks[instruction as usize - OFFSET].pop();
+                }
                 return true;
             }
         }
@@ -32,20 +59,13 @@ impl<'a, T: FungeInteger> FPManager<'a, T> {
     }
 
     pub fn execute(&mut self, program: &mut Program<T>, instruction: char) -> bool {
-        for fp in self.loaded.iter_mut().rev() {
-            if fp.execute(program, instruction) {
-                return true;
+        let instruction_idx = instruction as usize - OFFSET;
+        match self.istacks[instruction_idx].last() {
+            Some(&fp_idx) => {
+                let fp = &self.available[fp_idx];
+                fp.execute(program, instruction)
             }
-        }
-        false
-    }
-}
-
-impl<'a, T: FungeInteger> Default for FPManager<'a, T> {
-    fn default() -> Self {
-        Self {
-            available: vec![Box::new(&ROMA {}), Box::new(&MODU {})],
-            loaded: vec![],
+            None => false,
         }
     }
 }
